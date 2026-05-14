@@ -1,0 +1,21 @@
+export type Vertice = {
+    id: string;
+    x: number;
+    y: number;
+    rotulo?: string; // nome opcional
+}
+
+export type Aresta = {
+    id: string;
+    origem: number; // vértice inicial
+    destino: number; // vértice final
+    distancia: number;
+    direcionada: boolean; // false = mão dupla, true = mão única
+}
+
+export type Grafo = {
+    vertices: Vertice[]; // vetor de vértices
+    arestas: Aresta[]; // vetor de arestas
+    ehPonderado: boolean; // se o grafo usa pesos
+    ehDirecionado: boolean; // false = mão dupla, true = mão única
+}
