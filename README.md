@@ -45,4 +45,48 @@ O sistema permite importar mapas reais (`.osm`, `.xml`, `.poly` e `.txt`), conve
 frontend/ → Interface gráfica e renderização do grafo
 backend/  → API, upload e processamento dos arquivos
 shared/   → Estruturas, algoritmos e tipos compartilhados
-docs/     → Documentação do projeto
+```
+
+## Documentação e Artefatos
+
+A documentação do projeto, arquivos auxiliares e demais artefatos utilizados no desenvolvimento estão disponíveis em:
+
+[Google Drive - Documentação do Projeto](https://drive.google.com/drive/folders/1GO0rBSrr5jF-awCXLVV6ccvmhYqSQZy-?usp=sharing)
+
+## Como executar o projeto
+
+### Frontend
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+O frontend será executado em:
+
+```txt
+http://localhost:5173
+```
+
+---
+
+### Backend
+
+```bash
+cd backend
+npm install
+npm run dev
+```
+
+O backend será executado em:
+
+```txt
+http://localhost:3000
+```
+
+Para testar a API:
+
+```txt
+http://localhost:3000/api
+```
