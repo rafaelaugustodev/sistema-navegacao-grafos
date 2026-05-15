@@ -1,9 +1,9 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Grafo } from "../../../shared/types/grafo";
 
 export const GrafoCanvas = () => {
 
-    // Objeto do tipo Grafo
+    // Objeto do tipo Grafo usado para testes do canvas
     const grafo: Grafo = {
         vertices: [
             { id: "A", x: 100, y: 100, rotulo: "A" },
@@ -19,10 +19,67 @@ export const GrafoCanvas = () => {
         ehDirecionado: false
     };
 
-    // Referência para acessar o elemento canvas do DOM
+    // Referência para acessar o canvas real do DOM
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
+    // Estado que armazena o vértice de origem selecionado
+    const [origemSelecionada, setOrigemSelecionada] = useState<string | null>(null);
+
+    // Estado que armazena o vértice de destino selecionado
+    const [destinoSelecionado, setDestinoSelecionado] = useState<string | null>(null);
+
+    // Função chamada toda vez que o usuário clicar no canvas
+    const handleClick = (event: React.MouseEvent<HTMLCanvasElement>) => {
+
+        // Recupera o canvas real
+        const canvas = canvasRef.current;
+
+        if (!canvas) return;
+
+        // Recupera posição e tamanho do canvas na tela
+        const rect = canvas.getBoundingClientRect();
+
+        // Converte posição horizontal do mouse para coordenada interna do canvas
+        const mouseX = event.clientX - rect.left;
+
+        // Converte posição vertical do mouse para coordenada interna do canvas
+        const mouseY = event.clientY - rect.top;
+
+        // Procura o vértice clicado
+        const verticeClicado = grafo.vertices.find((vertice) => {
+
+            // Calcula distância entre o mouse e o centro do vértice
+            const distancia = Math.sqrt(
+                (mouseX - vertice.x) ** 2 +
+                (mouseY - vertice.y) ** 2
+            );
+
+            // Verifica se o clique ocorreu dentro do raio do vértice
+            return distancia <= 20;
+        });
+
+        // Se não clicou em nenhum vértice, encerra função
+        if (!verticeClicado) return;
+
+        // Define o primeiro clique como origem
+        if (!origemSelecionada) {
+            setOrigemSelecionada(verticeClicado.id);
+            return;
+        }
+
+        // Define o segundo clique como destino
+        if (!destinoSelecionado) {
+            setDestinoSelecionado(verticeClicado.id);
+            return;
+        }
+
+        // Reinicia seleção após terceiro clique
+        setOrigemSelecionada(verticeClicado.id);
+        setDestinoSelecionado(null);
+    };
+
     useEffect(() => {
+
         // Recupera o canvas real
         const canvas = canvasRef.current;
 
@@ -33,11 +90,11 @@ export const GrafoCanvas = () => {
 
         if (!ctx) return;
 
-        // Fundo do canvas
+        // Desenha o fundo do canvas
         ctx.fillStyle = "#111827";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        // Percorre todas as arestas
+        // Percorre todas as arestas do grafo
         grafo.arestas.forEach((aresta) => {
 
             // Procura vértice de origem
@@ -50,37 +107,38 @@ export const GrafoCanvas = () => {
                 (v) => v.id === aresta.destino
             );
 
-            // Se não encontrar origem ou destino, cancela desenho
+            // Se não encontrar origem ou destino, não desenha
             if (!origem || !destino) return;
 
             // Inicia desenho da aresta
             ctx.beginPath();
 
-            // Move cursor para origem
+            // Move cursor para vértice de origem
             ctx.moveTo(origem.x, origem.y);
 
-            // Cria linha até destino
+            // Cria linha até vértice de destino
             ctx.lineTo(destino.x, destino.y);
 
-            // Cor da aresta
+            // Define cor da aresta
             ctx.strokeStyle = "white";
 
-            // Espessura da aresta
+            // Define espessura da aresta
             ctx.lineWidth = 2;
 
-            // Desenha a linha
+            // Renderiza a linha
             ctx.stroke();
 
             // Calcula ponto médio da aresta
             const meioX = (origem.x + destino.x) / 2;
             const meioY = (origem.y + destino.y) / 2;
 
-            // Desenha distância da aresta
+            // Configuração do texto da distância
             ctx.fillStyle = "yellow";
             ctx.font = "12px Arial";
             ctx.textAlign = "center";
             ctx.textBaseline = "middle";
 
+            // Desenha distância da aresta
             ctx.fillText(
                 String(aresta.distancia),
                 meioX,
@@ -88,13 +146,13 @@ export const GrafoCanvas = () => {
             );
         });
 
-        // Percorre todos os vértices
+        // Percorre todos os vértices do grafo
         grafo.vertices.forEach((vertice) => {
 
             // Inicia desenho do vértice
             ctx.beginPath();
 
-            // Desenha círculo
+            // Desenha círculo do vértice
             ctx.arc(
                 vertice.x,
                 vertice.y,
@@ -103,13 +161,23 @@ export const GrafoCanvas = () => {
                 Math.PI * 2
             );
 
-            // Cor do vértice
-            ctx.fillStyle = "#3b82f6";
+            // Vértice de origem fica verde
+            if (vertice.id === origemSelecionada) {
+                ctx.fillStyle = "#22c55e";
 
-            // Preenche círculo
+            // Vértice de destino fica vermelho
+            } else if (vertice.id === destinoSelecionado) {
+                ctx.fillStyle = "#ef4444";
+
+            // Vértices normais ficam azuis
+            } else {
+                ctx.fillStyle = "#3b82f6";
+            }
+
+            // Preenche o círculo do vértice
             ctx.fill();
 
-            // Configuração do texto
+            // Configuração do texto do vértice
             ctx.fillStyle = "white";
             ctx.font = "14px Arial";
             ctx.textAlign = "center";
@@ -123,13 +191,15 @@ export const GrafoCanvas = () => {
             );
         });
 
-    }, []);
+    // Executa novamente toda vez que origem ou destino mudar
+    }, [origemSelecionada, destinoSelecionado]);
 
     return (
         <canvas
             ref={canvasRef}
             width={800}
             height={600}
+            onClick={handleClick}
         />
     );
 };
