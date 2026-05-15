@@ -7,8 +7,8 @@ export type Vertice = {
 
 export type Aresta = {
     id: string;
-    origem: number; // vértice inicial
-    destino: number; // vértice final
+    origem: string; // id do vértice inicial
+    destino: string; // id do vértice final
     distancia: number;
     direcionada: boolean; // false = mão dupla, true = mão única
 }
@@ -16,6 +16,6 @@ export type Aresta = {
 export type Grafo = {
     vertices: Vertice[]; // vetor de vértices
     arestas: Aresta[]; // vetor de arestas
-    ehPonderado: boolean; // se o grafo usa pesos
+    ehPonderado: boolean; // se o grafo usa distancia 
     ehDirecionado: boolean; // false = mão dupla, true = mão única
 }

@@ -1,8 +1,8 @@
-import { Grafo } from "./canvas/Grafo";
+import { GrafoCanvas } from "./canvas/GrafoCanvas";
 
 function App() {
   return (
-    <Grafo/>
+    <GrafoCanvas/>
   );
 }
 

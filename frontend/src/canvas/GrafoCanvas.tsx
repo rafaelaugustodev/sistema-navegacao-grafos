@@ -1,8 +1,10 @@
 import { useEffect, useRef } from "react";
+import type { Grafo } from "../../../shared/types/grafo";
 
-export const Grafo = () => {
-    // Objeto temporário usado para testar a renderização do grafo no Canvas
-    const grafo = {
+export const GrafoCanvas = () => {
+
+    // Objeto do tipo Grafo
+    const grafo: Grafo = {
         vertices: [
             { id: "A", x: 100, y: 100, rotulo: "A" },
             { id: "B", x: 300, y: 100, rotulo: "B" },
@@ -17,88 +19,110 @@ export const Grafo = () => {
         ehDirecionado: false
     };
 
-    // Referência para acessar o elemento real do canvas no DOM
+    // Referência para acessar o elemento canvas do DOM
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
     useEffect(() => {
-        // Recupera o elemento canvas renderizado na tela
+        // Recupera o canvas real
         const canvas = canvasRef.current;
 
         if (!canvas) return;
 
-        // Recupera o contexto 2D, que fornece as funções de desenho
+        // Recupera a API de desenho 2D
         const ctx = canvas.getContext("2d");
 
         if (!ctx) return;
 
-        // Desenha o fundo do canvas
+        // Fundo do canvas
         ctx.fillStyle = "#111827";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        // Percorre todas as arestas do grafo para desenhá-las
+        // Percorre todas as arestas
         grafo.arestas.forEach((aresta) => {
-            // Procura o vértice de origem da aresta
-            const origem = grafo.vertices.find((v) => v.id === aresta.origem);
 
-            // Procura o vértice de destino da aresta
-            const destino = grafo.vertices.find((v) => v.id === aresta.destino);
+            // Procura vértice de origem
+            const origem = grafo.vertices.find(
+                (v) => v.id === aresta.origem
+            );
 
-            // Se algum dos vértices não existir, a aresta não é desenhada
+            // Procura vértice de destino
+            const destino = grafo.vertices.find(
+                (v) => v.id === aresta.destino
+            );
+
+            // Se não encontrar origem ou destino, cancela desenho
             if (!origem || !destino) return;
 
-            // Inicia um novo desenho para a aresta
+            // Inicia desenho da aresta
             ctx.beginPath();
 
-            // Move o cursor para a coordenada do vértice de origem
+            // Move cursor para origem
             ctx.moveTo(origem.x, origem.y);
 
-            // Cria uma linha até a coordenada do vértice de destino
+            // Cria linha até destino
             ctx.lineTo(destino.x, destino.y);
 
-            // Define a cor da aresta
+            // Cor da aresta
             ctx.strokeStyle = "white";
 
-            // Define a espessura da aresta
+            // Espessura da aresta
             ctx.lineWidth = 2;
 
-            // Renderiza a linha no canvas
+            // Desenha a linha
             ctx.stroke();
 
-            // Calcula o ponto médio da aresta para exibir a distância
+            // Calcula ponto médio da aresta
             const meioX = (origem.x + destino.x) / 2;
             const meioY = (origem.y + destino.y) / 2;
 
-            // Desenha o peso/distância da aresta
+            // Desenha distância da aresta
             ctx.fillStyle = "yellow";
             ctx.font = "12px Arial";
             ctx.textAlign = "center";
             ctx.textBaseline = "middle";
-            ctx.fillText(String(aresta.distancia), meioX, meioY);
+
+            ctx.fillText(
+                String(aresta.distancia),
+                meioX,
+                meioY
+            );
         });
 
-        // Percorre todos os vértices do grafo para desenhá-los
+        // Percorre todos os vértices
         grafo.vertices.forEach((vertice) => {
-            // Inicia um novo desenho para o vértice
+
+            // Inicia desenho do vértice
             ctx.beginPath();
 
-            // Desenha o círculo que representa o vértice
-            ctx.arc(vertice.x, vertice.y, 20, 0, Math.PI * 2);
+            // Desenha círculo
+            ctx.arc(
+                vertice.x,
+                vertice.y,
+                20,
+                0,
+                Math.PI * 2
+            );
 
-            // Define a cor do vértice
+            // Cor do vértice
             ctx.fillStyle = "#3b82f6";
 
-            // Preenche o círculo do vértice
+            // Preenche círculo
             ctx.fill();
 
-            // Define o estilo do texto do rótulo
+            // Configuração do texto
             ctx.fillStyle = "white";
             ctx.font = "14px Arial";
             ctx.textAlign = "center";
             ctx.textBaseline = "middle";
 
-            // Desenha o rótulo do vértice; se não houver rótulo, usa o id
-            ctx.fillText(vertice.rotulo ?? vertice.id, vertice.x, vertice.y);
+            // Desenha rótulo do vértice
+            ctx.fillText(
+                vertice.rotulo ?? vertice.id,
+                vertice.x,
+                vertice.y
+            );
         });
+
     }, []);
 
     return (
