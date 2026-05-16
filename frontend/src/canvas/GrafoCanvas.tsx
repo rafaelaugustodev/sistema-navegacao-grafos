@@ -1,61 +1,26 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import type { Grafo } from "../../../shared/types/grafo";
-import { dijkstra } from "../../../shared/algoritmos/dijkstra";
 
-export const GrafoCanvas = () => {
+type GrafoCanvasProps = {
+    grafo: Grafo;
+    origemSelecionada: string | null;
+    destinoSelecionado: string | null;
+    menorCaminho: string[];
+    onClickVertice: (verticeId: string) => void;
+    onClickFora: () => void;
+};
 
-    // Grafo utilizado para testes da renderização e do Dijkstra
-    const grafo: Grafo = {
-        vertices: [
-            { id: "A", x: 100, y: 100, rotulo: "A" },
-            { id: "B", x: 300, y: 100, rotulo: "B" },
-            { id: "C", x: 500, y: 100, rotulo: "C" },
-
-            { id: "D", x: 200, y: 250, rotulo: "D" },
-            { id: "E", x: 400, y: 250, rotulo: "E" },
-
-            { id: "F", x: 100, y: 400, rotulo: "F" },
-            { id: "G", x: 300, y: 400, rotulo: "G" },
-            { id: "H", x: 500, y: 400, rotulo: "H" }
-        ],
-
-        arestas: [
-            { id: "1", origem: "A", destino: "B", distancia: 4, direcionada: false },
-            { id: "2", origem: "B", destino: "C", distancia: 6, direcionada: false },
-
-            { id: "3", origem: "A", destino: "D", distancia: 3, direcionada: false },
-            { id: "4", origem: "B", destino: "D", distancia: 2, direcionada: false },
-            { id: "5", origem: "B", destino: "E", distancia: 5, direcionada: false },
-            { id: "6", origem: "C", destino: "E", distancia: 4, direcionada: false },
-
-            { id: "7", origem: "D", destino: "G", distancia: 6, direcionada: false },
-            { id: "8", origem: "E", destino: "G", distancia: 2, direcionada: false },
-
-            { id: "9", origem: "D", destino: "F", distancia: 5, direcionada: false },
-            { id: "10", origem: "E", destino: "H", distancia: 3, direcionada: false },
-
-            { id: "11", origem: "F", destino: "G", distancia: 4, direcionada: false },
-            { id: "12", origem: "G", destino: "H", distancia: 1, direcionada: false }
-        ],
-
-        ehPonderado: true,
-        ehDirecionado: false
-    };
+export const GrafoCanvas = ({
+    grafo,
+    origemSelecionada,
+    destinoSelecionado,
+    menorCaminho,
+    onClickVertice,
+    onClickFora
+}: GrafoCanvasProps) => {
 
     // Referência para acessar o canvas real do DOM
     const canvasRef = useRef<HTMLCanvasElement>(null);
-
-    // Estado que armazena vértice de origem
-    const [origemSelecionada, setOrigemSelecionada] = useState<string | null>(null);
-
-    // Estado que armazena vértice de destino
-    const [destinoSelecionado, setDestinoSelecionado] = useState<string | null>(null);
-
-    // Estado que armazena o menor caminho encontrado
-    const [menorCaminho, setMenorCaminho] = useState<string[]>([]);
-
-    // Estado que armazena a distância total do caminho
-    const [distanciaTotal, setDistanciaTotal] = useState<number | null>(null);
 
     // Função chamada ao clicar no canvas
     const handleClick = (event: React.MouseEvent<HTMLCanvasElement>) => {
@@ -84,47 +49,16 @@ export const GrafoCanvas = () => {
             return distancia <= 20;
         });
 
-        // Se não encontrou vértice, encerra
-        if (!verticeClicado) return;
-
-        // Primeiro clique define origem
-        if (!origemSelecionada) {
-            setOrigemSelecionada(verticeClicado.id);
+        // Clique fora de qualquer vértice é tratado pelo componente pai
+        // (usado para desfazer a seleção quando já existe um caminho traçado)
+        if (!verticeClicado) {
+            onClickFora();
             return;
         }
 
-        // Segundo clique define destino
-        if (!destinoSelecionado) {
-            setDestinoSelecionado(verticeClicado.id);
-            return;
-        }
-
-        // Terceiro clique reinicia seleção
-        setOrigemSelecionada(verticeClicado.id);
-        setDestinoSelecionado(null);
-
-        // Limpa caminho anterior
-        setMenorCaminho([]);
-        setDistanciaTotal(null);
+        // Delega a decisão de seleção ao componente pai
+        onClickVertice(verticeClicado.id);
     };
-
-    // Executa Dijkstra quando origem e destino forem selecionados
-    useEffect(() => {
-
-        if (!origemSelecionada || !destinoSelecionado) return;
-
-        const resultado = dijkstra(
-            grafo,
-            origemSelecionada,
-            destinoSelecionado
-        );
-
-        if (!resultado) return;
-
-        setMenorCaminho(resultado.caminho);
-        setDistanciaTotal(resultado.distanciaTotal);
-
-    }, [origemSelecionada, destinoSelecionado]);
 
     // Desenha o grafo
     useEffect(() => {
@@ -259,31 +193,18 @@ export const GrafoCanvas = () => {
         });
 
     }, [
+        grafo,
         origemSelecionada,
         destinoSelecionado,
         menorCaminho
     ]);
 
     return (
-        <>
-            <canvas
-                ref={canvasRef}
-                width={800}
-                height={600}
-                onClick={handleClick}
-            />
-
-            {/* Exibe distância total encontrada */}
-            {distanciaTotal !== null && (
-                <p
-                    style={{
-                        color: "white",
-                        fontSize: "18px"
-                    }}
-                >
-                    Distância total: {distanciaTotal}
-                </p>
-            )}
-        </>
+        <canvas
+            ref={canvasRef}
+            width={800}
+            height={600}
+            onClick={handleClick}
+        />
     );
 };
