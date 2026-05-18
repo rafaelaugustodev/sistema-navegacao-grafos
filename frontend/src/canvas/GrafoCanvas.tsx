@@ -126,6 +126,39 @@ export const GrafoCanvas = ({
             // Renderiza linha
             ctx.stroke();
 
+            // Desenha ponta de seta para arestas direcionadas.
+            // A ponta fica encostada na borda do círculo destino (raio 20)
+            // para não ser encoberta pelo preenchimento do vértice.
+            if (aresta.direcionada) {
+
+                const raioVertice = 20;
+                const tamanhoSeta = 12;
+                const anguloAbertura = Math.PI / 6;
+
+                const angulo = Math.atan2(
+                    destino.y - origem.y,
+                    destino.x - origem.x
+                );
+
+                const pontaX = destino.x - raioVertice * Math.cos(angulo);
+                const pontaY = destino.y - raioVertice * Math.sin(angulo);
+
+                ctx.beginPath();
+                ctx.moveTo(pontaX, pontaY);
+                ctx.lineTo(
+                    pontaX - tamanhoSeta * Math.cos(angulo - anguloAbertura),
+                    pontaY - tamanhoSeta * Math.sin(angulo - anguloAbertura)
+                );
+                ctx.lineTo(
+                    pontaX - tamanhoSeta * Math.cos(angulo + anguloAbertura),
+                    pontaY - tamanhoSeta * Math.sin(angulo + anguloAbertura)
+                );
+                ctx.closePath();
+
+                ctx.fillStyle = estaNoMenorCaminho ? "#f97316" : "white";
+                ctx.fill();
+            }
+
             // Calcula ponto médio da aresta
             const meioX = (origem.x + destino.x) / 2;
             const meioY = (origem.y + destino.y) / 2;
