@@ -21,6 +21,8 @@ const INF = Infinity;
 export type ResultadoDijkstra = {
     caminho: string[];
     distanciaTotal: number;
+    tempoExecucaoMs: number;
+    nosExplorados: number;
 };
 
 function calcularDistancia(x0: number, y0: number, x1: number, y1: number): number {
@@ -84,6 +86,9 @@ export function dijkstra(
 
     distancias[origem] = 0;
 
+    // Marca o início para medir o tempo total do Dijkstra (RF07)
+    const inicio = performance.now();
+
     for (let i = 0; i < totalVertices; i++) {
         let atual = -1;
         let menorDistancia = INF;
@@ -110,6 +115,8 @@ export function dijkstra(
         }
     }
 
+    const tempoExecucaoMs = performance.now() - inicio;
+
     if (distancias[destino] === INF) {
         return null;
     }
@@ -124,6 +131,8 @@ export function dijkstra(
 
     return {
         caminho,
-        distanciaTotal: distancias[destino]
+        distanciaTotal: distancias[destino],
+        tempoExecucaoMs,
+        nosExplorados: caminho.length
     };
 }
