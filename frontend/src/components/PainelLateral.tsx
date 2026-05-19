@@ -1,4 +1,6 @@
+import { useRef } from "react";
 import type { Grafo, Vertice } from "../../../shared/types/grafo";
+import "./PainelLateral.css";
 
 type PainelLateralProps = {
     grafosDisponiveis: Record<string, { nome: string; grafo: Grafo }>;
@@ -13,6 +15,9 @@ type PainelLateralProps = {
     verticesCaminho: Vertice[];
     caminhoInexistente: boolean;
     onDesfazerSelecao: () => void;
+    onImportarArquivo: (arquivo: File) => void;
+    carregandoUpload: boolean;
+    erroUpload: string | null;
 };
 
 export const PainelLateral = ({
@@ -27,267 +32,258 @@ export const PainelLateral = ({
     totalArestas,
     verticesCaminho,
     caminhoInexistente,
-    onDesfazerSelecao
+    onDesfazerSelecao,
+    onImportarArquivo,
+    carregandoUpload,
+    erroUpload
 }: PainelLateralProps) => {
 
-    // Habilita o botão apenas quando há alguma seleção a desfazer
-    const possuiSelecao = origemSelecionada !== null || destinoSelecionado !== null;
+    // Verifica se existe origem ou destino selecionado
+    const possuiSelecao =
+        origemSelecionada !== null ||
+        destinoSelecionado !== null;
 
-    // Métricas derivadas do caminho calculado
+    // Referência para acessar o input de arquivo escondido
+    const inputArquivoRef = useRef<HTMLInputElement>(null);
+
+    // Abre a janela de seleção de arquivo
+    const handleClickImportar = () => {
+        inputArquivoRef.current?.click();
+    };
+
+    // Captura o arquivo escolhido pelo usuário
+    const handleMudancaArquivo = (
+        event: React.ChangeEvent<HTMLInputElement>
+    ) => {
+        const arquivo = event.target.files?.[0];
+
+        if (arquivo) {
+            onImportarArquivo(arquivo);
+        }
+
+        // Limpa o input para permitir importar o mesmo arquivo novamente
+        event.target.value = "";
+    };
+
+    // Quantidade de vértices no caminho retornado pelo Dijkstra
     const quantidadeNosExplorados = verticesCaminho.length;
-    const quantidadeArestasExploradas = verticesCaminho.length > 0
-        ? verticesCaminho.length - 1
-        : 0;
 
-    // Só consideramos o resultado válido quando há caminho e não há aviso
-    const possuiCaminho = verticesCaminho.length > 0 && !caminhoInexistente;
+    // Quantidade de arestas no caminho
+    const quantidadeArestasExploradas =
+        verticesCaminho.length > 0
+            ? verticesCaminho.length - 1
+            : 0;
+
+    // Indica se existe um caminho válido calculado
+    const possuiCaminho =
+        verticesCaminho.length > 0 &&
+        !caminhoInexistente;
 
     return (
-        <aside style={estilos.painel}>
+        <aside className="painel">
 
-            <h1 style={estilos.titulo}>
+            <h1 className="painel-titulo">
                 Sistema de Navegação
             </h1>
 
-            <section style={estilos.bloco}>
+            <section className="painel-bloco">
 
-                <h2 style={estilos.subtitulo}>
+                <h2 className="painel-subtitulo">
                     Grafo
                 </h2>
 
+                {/* Seleção de grafo pré-carregado */}
                 <select
                     value={grafoSelecionado}
-                    onChange={(e) => onSelecionarGrafo(e.target.value)}
-                    style={estilos.select}
+                    onChange={(event) =>
+                        onSelecionarGrafo(event.target.value)
+                    }
+                    className="painel-select"
                 >
-                    {Object.entries(grafosDisponiveis).map(([chave, { nome }]) => (
-                        <option key={chave} value={chave}>
-                            {nome}
-                        </option>
-                    ))}
+                    {Object.entries(grafosDisponiveis).map(
+                        ([chave, { nome }]) => (
+                            <option key={chave} value={chave}>
+                                {nome}
+                            </option>
+                        )
+                    )}
                 </select>
+
+                {/* Input escondido para upload de arquivo */}
+                <input
+                    ref={inputArquivoRef}
+                    type="file"
+                    accept=".poly,.txt,.osm,.xml"
+                    onChange={handleMudancaArquivo}
+                    className="painel-input-arquivo"
+                />
+
+                {/* Botão visível que aciona o input escondido */}
+                <button
+                    type="button"
+                    onClick={handleClickImportar}
+                    disabled={carregandoUpload}
+                    className={`painel-botao${carregandoUpload ? " carregando" : ""}`}
+                >
+                    {carregandoUpload
+                        ? "Importando..."
+                        : "Importar arquivo (.poly, .txt, .osm)"}
+                </button>
+
+                {/* Mensagem de erro do upload */}
+                {erroUpload && (
+                    <p className="painel-aviso">
+                        {erroUpload}
+                    </p>
+                )}
             </section>
 
-            <section style={estilos.bloco}>
+            <section className="painel-bloco">
 
-                <h2 style={estilos.subtitulo}>
+                <h2 className="painel-subtitulo">
                     Seleção
                 </h2>
 
-                <p style={estilos.linha}>
-                    <span style={estilos.rotulo}>Origem:</span>{" "}
-                    <span style={{ color: "#22c55e" }}>
+                <p className="painel-linha">
+                    <span className="painel-rotulo">Origem:</span>{" "}
+                    <span className="cor-origem">
                         {origemSelecionada ?? "—"}
                     </span>
                 </p>
 
-                <p style={estilos.linha}>
-                    <span style={estilos.rotulo}>Destino:</span>{" "}
-                    <span style={{ color: "#ef4444" }}>
+                <p className="painel-linha">
+                    <span className="painel-rotulo">Destino:</span>{" "}
+                    <span className="cor-destino">
                         {destinoSelecionado ?? "—"}
                     </span>
                 </p>
             </section>
 
-            <section style={estilos.bloco}>
+            <section className="painel-bloco">
 
-                <h2 style={estilos.subtitulo}>
+                <h2 className="painel-subtitulo">
                     Dados Gerais
                 </h2>
 
-                <p style={estilos.linha}>
-                    <span style={estilos.rotulo}>Total de vértices:</span>{" "}
-                    <span style={{ color: "#f97316" }}>
+                <p className="painel-linha">
+                    <span className="painel-rotulo">Total de vértices:</span>{" "}
+                    <span className="cor-destaque">
                         {totalVertices}
                     </span>
                 </p>
 
-                <p style={estilos.linha}>
-                    <span style={estilos.rotulo}>Total de arestas:</span>{" "}
-                    <span style={{ color: "#f97316" }}>
+                <p className="painel-linha">
+                    <span className="painel-rotulo">Total de arestas:</span>{" "}
+                    <span className="cor-destaque">
                         {totalArestas}
                     </span>
                 </p>
             </section>
 
-            <section style={estilos.bloco}>
+            <section className="painel-bloco">
 
-                <h2 style={estilos.subtitulo}>
+                <h2 className="painel-subtitulo">
                     Resultado
                 </h2>
 
+                {/* Aviso quando não há caminho entre origem e destino */}
                 {caminhoInexistente && (
-                    <p style={estilos.aviso}>
+                    <p className="painel-aviso">
                         Não existe caminho possível entre os vértices{" "}
                         <strong>{origemSelecionada}</strong> e{" "}
                         <strong>{destinoSelecionado}</strong>.
                     </p>
                 )}
 
-                <p style={estilos.linha}>
-                    <span style={estilos.rotulo}>Distância total:</span>{" "}
+                <p className="painel-linha">
+                    <span className="painel-rotulo">Distância total:</span>{" "}
                     {distanciaTotal !== null ? (
-                        <span style={{ color: "#f97316" }}>
+                        <span className="cor-destaque">
                             {distanciaTotal}
                         </span>
                     ) : (
-                        <span style={estilos.placeholder}>—</span>
+                        <span className="painel-placeholder">—</span>
                     )}
                 </p>
 
-                <p style={estilos.linha}>
-                    <span style={estilos.rotulo}>Tempo de execução:</span>{" "}
+                <p className="painel-linha">
+                    <span className="painel-rotulo">Tempo de execução:</span>{" "}
                     {tempoExecucaoMs !== null ? (
-                        <span style={{ color: "#f97316" }}>
+                        <span className="cor-destaque">
                             {tempoExecucaoMs.toFixed(6)} ms
                         </span>
                     ) : (
-                        <span style={estilos.placeholder}>—</span>
+                        <span className="painel-placeholder">—</span>
                     )}
                 </p>
 
-                <p style={estilos.linha}>
-                    <span style={estilos.rotulo}>Quantidade de nós explorados:</span>{" "}
+                <p className="painel-linha">
+                    <span className="painel-rotulo">
+                        Quantidade de nós explorados:
+                    </span>{" "}
                     {possuiCaminho ? (
-                        <span style={{ color: "#f97316" }}>
+                        <span className="cor-destaque">
                             {quantidadeNosExplorados}
                         </span>
                     ) : (
-                        <span style={estilos.placeholder}>—</span>
+                        <span className="painel-placeholder">—</span>
                     )}
                 </p>
 
-                <p style={estilos.linha}>
-                    <span style={estilos.rotulo}>Quantidade de arestas exploradas:</span>{" "}
+                <p className="painel-linha">
+                    <span className="painel-rotulo">
+                        Quantidade de arestas exploradas:
+                    </span>{" "}
                     {possuiCaminho ? (
-                        <span style={{ color: "#f97316" }}>
+                        <span className="cor-destaque">
                             {quantidadeArestasExploradas}
                         </span>
                     ) : (
-                        <span style={estilos.placeholder}>—</span>
+                        <span className="painel-placeholder">—</span>
                     )}
                 </p>
             </section>
 
-            <section style={estilos.bloco}>
+            <section className="painel-bloco">
 
+                {/* Botão para limpar origem, destino e caminho */}
                 <button
                     type="button"
                     onClick={onDesfazerSelecao}
                     disabled={!possuiSelecao}
-                    style={{
-                        ...estilos.botao,
-                        opacity: possuiSelecao ? 1 : 0.5,
-                        cursor: possuiSelecao ? "pointer" : "not-allowed"
-                    }}
+                    className="painel-botao"
                 >
                     Desfazer seleção
                 </button>
             </section>
 
-            <section style={estilos.bloco}>
+            <section className="painel-bloco">
 
-                <h2 style={estilos.subtitulo}>
+                <h2 className="painel-subtitulo">
                     Nós explorados
                 </h2>
 
+                {/* Lista os vértices que compõem o menor caminho */}
                 {possuiCaminho ? (
-                    <ul style={estilos.lista}>
+                    <ul className="painel-lista">
                         {verticesCaminho.map((vertice) => (
-                            <li key={vertice.id} style={estilos.linha}>
-                                <span style={{ color: "#f97316" }}>{vertice.id}</span>
-                                <span style={estilos.rotulo}>
+                            <li key={vertice.id} className="painel-linha">
+                                <span className="cor-destaque">
+                                    {vertice.id}
+                                </span>
+
+                                <span className="painel-rotulo">
                                     {" "}(x= {vertice.x}, y= {vertice.y})
                                 </span>
                             </li>
                         ))}
                     </ul>
                 ) : (
-                    <p style={{ ...estilos.linha, ...estilos.placeholder }}>
+                    <p className="painel-linha painel-placeholder">
                         Nenhum caminho traçado.
                     </p>
                 )}
             </section>
         </aside>
     );
-};
-
-const estilos = {
-    painel: {
-        width: "280px",
-        height: "100vh",
-        background: "#1f2937",
-        color: "white",
-        padding: "20px",
-        boxSizing: "border-box" as const,
-        borderRight: "1px solid #374151",
-        display: "flex",
-        flexDirection: "column" as const,
-        gap: "20px",
-        overflowY: "auto" as const
-    },
-    titulo: {
-        fontSize: "18px",
-        fontWeight: 700,
-        margin: 0,
-        paddingBottom: "10px",
-        borderBottom: "1px solid #374151"
-    },
-    bloco: {
-        display: "flex",
-        flexDirection: "column" as const,
-        gap: "8px"
-    },
-    subtitulo: {
-        fontSize: "13px",
-        fontWeight: 600,
-        textTransform: "uppercase" as const,
-        letterSpacing: "0.5px",
-        color: "#9ca3af",
-        margin: 0
-    },
-    linha: {
-        fontSize: "14px",
-        margin: 0
-    },
-    rotulo: {
-        color: "#d1d5db"
-    },
-    placeholder: {
-        color: "#6b7280"
-    },
-    aviso: {
-        fontSize: "13px",
-        margin: 0,
-        padding: "8px 10px",
-        background: "rgba(239, 68, 68, 0.15)",
-        border: "1px solid #ef4444",
-        borderRadius: "6px",
-        color: "#fecaca"
-    },
-    select: {
-        background: "#111827",
-        color: "white",
-        border: "1px solid #4b5563",
-        borderRadius: "6px",
-        padding: "8px 10px",
-        fontSize: "14px"
-    },
-    botao: {
-        background: "#374151",
-        color: "white",
-        border: "1px solid #4b5563",
-        padding: "10px 14px",
-        borderRadius: "6px",
-        fontSize: "14px",
-        fontWeight: 500
-    },
-    lista: {
-        listStyle: "none" as const,
-        margin: 0,
-        padding: 0,
-        display: "flex",
-        flexDirection: "column" as const,
-        gap: "4px"
-    }
 };
