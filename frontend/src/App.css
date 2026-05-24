@@ -5,11 +5,44 @@
     overflow: hidden;
 }
 
+/* Wrapper do painel: anima a entrada/saída deslizando para a esquerda.
+   O painel interno mantém largura fixa (não reflui durante a animação);
+   a margem negativa o tira da tela e o canvas preenche o espaço. */
+.painel-wrapper {
+    flex-shrink: 0;
+    transition: margin-left 0.25s ease;
+}
+
+.painel-wrapper.oculto {
+    margin-left: -280px;
+}
+
 .app-area-canvas {
     flex: 1;
+    position: relative;
+    background: #0f172a;
+    overflow: hidden;
+}
+
+.botao-toggle-painel {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    z-index: 10;
+    width: 36px;
+    height: 36px;
+    border: 1px solid #4b5563;
+    border-radius: 8px;
+    background: rgba(31, 41, 55, 0.85);
+    color: white;
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #111827;
-    overflow: hidden;
+}
+
+.botao-toggle-painel:hover {
+    background: rgba(55, 65, 81, 0.95);
 }

@@ -7,54 +7,6 @@ import { importarGrafo } from "./api/upload";
 import type { Grafo } from "../../shared/types/grafo";
 import "./App.css";
 
-const LARGURA_CANVAS = 1080;
-const ALTURA_CANVAS = 720;
-const PADDING = 30;
-
-/**
- * Ajusta as coordenadas de um grafo para caber dentro do canvas.
- *
- * Isso é necessário porque arquivos reais podem ter coordenadas muito grandes.
- * A função mantém a proporção original do grafo.
- */
-function ajustarEscalaParaCanvas(grafo: Grafo): Grafo {
-    if (grafo.vertices.length === 0) return grafo;
-
-    let minX = grafo.vertices[0].x;
-    let maxX = grafo.vertices[0].x;
-    let minY = grafo.vertices[0].y;
-    let maxY = grafo.vertices[0].y;
-
-    // Encontra os limites do grafo
-    for (const vertice of grafo.vertices) {
-        if (vertice.x < minX) minX = vertice.x;
-        if (vertice.x > maxX) maxX = vertice.x;
-        if (vertice.y < minY) minY = vertice.y;
-        if (vertice.y > maxY) maxY = vertice.y;
-    }
-
-    const larguraDisponivel = LARGURA_CANVAS - 2 * PADDING;
-    const alturaDisponivel = ALTURA_CANVAS - 2 * PADDING;
-
-    const larguraGrafo = maxX - minX || 1;
-    const alturaGrafo = maxY - minY || 1;
-
-    // Calcula o fator de escala sem distorcer o grafo
-    const fator = Math.min(
-        larguraDisponivel / larguraGrafo,
-        alturaDisponivel / alturaGrafo
-    );
-
-    return {
-        ...grafo,
-        vertices: grafo.vertices.map((vertice) => ({
-            ...vertice,
-            x: PADDING + (vertice.x - minX) * fator,
-            y: PADDING + (vertice.y - minY) * fator
-        }))
-    };
-}
-
 function App() {
     // Grafo importado via upload
     const [grafoImportado, setGrafoImportado] = useState<Grafo | null>(null);
@@ -77,6 +29,9 @@ function App() {
             }
         };
     }, [grafoImportado]);
+
+    // Controla se o painel lateral está visível
+    const [painelVisivel, setPainelVisivel] = useState<boolean>(true);
 
     // Grafo atualmente selecionado no painel lateral
     const [grafoSelecionado, setGrafoSelecionado] = useState<string>("exemplo");
@@ -159,9 +114,8 @@ function App() {
 
         try {
             const grafoRecebido = await importarGrafo(arquivo);
-            const grafoAjustado = ajustarEscalaParaCanvas(grafoRecebido);
 
-            setGrafoImportado(grafoAjustado);
+            setGrafoImportado(grafoRecebido);
             setGrafoSelecionado("importado");
 
             setOrigemSelecionada(null);
@@ -213,25 +167,36 @@ function App() {
 
     return (
         <div className="app-layout">
-            <PainelLateral
-                grafosDisponiveis={grafosDisponiveis}
-                grafoSelecionado={grafoSelecionado}
-                onSelecionarGrafo={handleSelecionarGrafo}
-                origemSelecionada={origemSelecionada}
-                destinoSelecionado={destinoSelecionado}
-                distanciaTotal={distanciaTotal}
-                tempoExecucaoMs={tempoExecucaoMs}
-                totalVertices={grafo.vertices.length}
-                totalArestas={grafo.arestas.length}
-                verticesCaminho={verticesCaminho}
-                caminhoInexistente={caminhoInexistente}
-                onDesfazerSelecao={handleDesfazerSelecao}
-                onImportarArquivo={handleImportarArquivo}
-                carregandoUpload={carregandoUpload}
-                erroUpload={erroUpload}
-            />
+            <div className={`painel-wrapper${painelVisivel ? "" : " oculto"}`}>
+                <PainelLateral
+                    grafosDisponiveis={grafosDisponiveis}
+                    grafoSelecionado={grafoSelecionado}
+                    onSelecionarGrafo={handleSelecionarGrafo}
+                    origemSelecionada={origemSelecionada}
+                    destinoSelecionado={destinoSelecionado}
+                    distanciaTotal={distanciaTotal}
+                    tempoExecucaoMs={tempoExecucaoMs}
+                    totalVertices={grafo.vertices.length}
+                    totalArestas={grafo.arestas.length}
+                    verticesCaminho={verticesCaminho}
+                    caminhoInexistente={caminhoInexistente}
+                    onDesfazerSelecao={handleDesfazerSelecao}
+                    onImportarArquivo={handleImportarArquivo}
+                    carregandoUpload={carregandoUpload}
+                    erroUpload={erroUpload}
+                />
+            </div>
 
             <main className="app-area-canvas">
+                <button
+                    type="button"
+                    className="botao-toggle-painel"
+                    onClick={() => setPainelVisivel((visivel) => !visivel)}
+                    title={painelVisivel ? "Ocultar painel" : "Mostrar painel"}
+                >
+                    {painelVisivel ? "‹" : "☰"}
+                </button>
+
                 <GrafoCanvas
                     grafo={grafo}
                     origemSelecionada={origemSelecionada}
