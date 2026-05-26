@@ -111,7 +111,13 @@ export function desenharGrafo(
         const destino = mapaVertices.get(aresta.destino);
         if (!origem || !destino) return;
 
-        const cor = ehCaminho ? "#f97316" : corArestaBase;
+        // No trajeto, a cor revela o tipo de via: mão única em amarelo,
+        // mão dupla em laranja. Fora do trajeto usa a cor base do grafo.
+        const cor = ehCaminho
+            ? aresta.direcionada
+                ? "#facc15"
+                : "#f97316"
+            : corArestaBase;
         ctx.strokeStyle = cor;
         ctx.lineWidth = ehCaminho ? espessuraCaminho : espessuraAresta;
 
@@ -126,7 +132,7 @@ export function desenharGrafo(
         if (!ehGrafoGrande || mostrarPesos) {
             const meioX = (origem.x + destino.x) / 2;
             const meioY = (origem.y + destino.y) / 2;
-            ctx.fillStyle = "#facc15";
+            ctx.fillStyle = "#c4b5fd";
             ctx.font = `${12 / escala}px Arial`;
             ctx.textAlign = "center";
             ctx.textBaseline = "middle";

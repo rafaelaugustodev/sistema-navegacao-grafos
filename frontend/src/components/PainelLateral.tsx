@@ -362,7 +362,7 @@ export const PainelLateral = ({
                                 </span>
 
                                 <span className="painel-rotulo">
-                                    {" "}(x= {vertice.x}, y= {vertice.y})
+                                    {" "}(x= {vertice.x.toFixed(2)}, y= {vertice.y.toFixed(2)})
                                 </span>
                             </li>
                         ))}
