@@ -44,6 +44,23 @@
     color: #d1d5db;
 }
 
+.painel-subitem {
+    padding-left: 12px;
+}
+
+.painel-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: #d1d5db;
+    cursor: pointer;
+}
+
+.painel-checkbox input {
+    cursor: pointer;
+}
+
 .painel-placeholder {
     color: #6b7280;
 }

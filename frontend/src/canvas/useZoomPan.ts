@@ -49,6 +49,10 @@ export function useZoomPan({
     // Escala do encaixe que está valendo como "100%" na barra de zoom.
     const [escalaAjuste, setEscalaAjuste] = useState(ajuste.escala);
 
+    // Espelha o estado de arrasto para o render (o ref não pode ser lido no
+    // corpo do componente). Usado só para trocar o cursor.
+    const [arrastando, setArrastando] = useState(false);
+
     // Sinaliza que a visão precisa ser reencaixada (grafo novo, ainda sem fit).
     const precisaAjustar = useRef(true);
 
@@ -100,6 +104,7 @@ export function useZoomPan({
             offsetInicialY: offset.y,
             moveu: false
         };
+        setArrastando(true);
     };
 
     const onMouseMove = (event: React.MouseEvent<HTMLCanvasElement>) => {
@@ -123,9 +128,11 @@ export function useZoomPan({
 
         if (arrasto.current.moveu) {
             arrasto.current.ativo = false;
+            setArrastando(false);
             return;
         }
         arrasto.current.ativo = false;
+        setArrastando(false);
 
         const { x, y } = posicaoNoCanvas(event);
         const mundo = telaParaMundo(x, y);
@@ -172,7 +179,7 @@ export function useZoomPan({
         escala,
         offset,
         escalaAjuste,
-        arrastando: arrasto.current.ativo,
+        arrastando,
         handlers: { onMouseDown, onMouseMove, onMouseUp, onWheel },
         ampliar,
         reduzir,

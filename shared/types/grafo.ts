@@ -16,6 +16,9 @@ export type Aresta = {
 export type Grafo = {
     vertices: Vertice[]; // vetor de vértices
     arestas: Aresta[]; // vetor de arestas
-    ehPonderado: boolean; // se o grafo usa distancia 
+    ehPonderado: boolean; // se o grafo usa distancia
     ehDirecionado: boolean; // false = mão dupla, true = mão única
+    // Quantos metros reais cada unidade do canvas (pixel) representa.
+    // Só é conhecido em mapas importados de coordenadas geográficas (.osm).
+    metrosPorUnidade?: number;
 }

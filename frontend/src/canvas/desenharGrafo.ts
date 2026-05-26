@@ -15,6 +15,10 @@ type OpcoesDesenho = {
     origemSelecionada: string | null;
     destinoSelecionado: string | null;
     menorCaminho: string[];
+    // Em grafos grandes (mapas), controlam o que aparece. Em grafos
+    // pequenos não têm efeito: vértices e pesos são sempre desenhados.
+    mostrarVertices: boolean;
+    mostrarPesos: boolean;
 };
 
 /**
@@ -43,7 +47,9 @@ export function desenharGrafo(
         raioVertice,
         origemSelecionada,
         destinoSelecionado,
-        menorCaminho
+        menorCaminho,
+        mostrarVertices,
+        mostrarPesos
     } = opcoes;
 
     // Limpa o fundo
@@ -105,7 +111,13 @@ export function desenharGrafo(
         const destino = mapaVertices.get(aresta.destino);
         if (!origem || !destino) return;
 
-        const cor = ehCaminho ? "#f97316" : corArestaBase;
+        // No trajeto, a cor revela o tipo de via: mão única em amarelo,
+        // mão dupla em laranja. Fora do trajeto usa a cor base do grafo.
+        const cor = ehCaminho
+            ? aresta.direcionada
+                ? "#facc15"
+                : "#f97316"
+            : corArestaBase;
         ctx.strokeStyle = cor;
         ctx.lineWidth = ehCaminho ? espessuraCaminho : espessuraAresta;
 
@@ -116,14 +128,15 @@ export function desenharGrafo(
 
         if (aresta.direcionada) desenharSeta(origem, destino, cor);
 
-        if (!ehGrafoGrande) {
+        // Grafo pequeno sempre mostra peso; grafo grande só se o usuário pedir.
+        if (!ehGrafoGrande || mostrarPesos) {
             const meioX = (origem.x + destino.x) / 2;
             const meioY = (origem.y + destino.y) / 2;
-            ctx.fillStyle = "#facc15";
+            ctx.fillStyle = "#c4b5fd";
             ctx.font = `${12 / escala}px Arial`;
             ctx.textAlign = "center";
             ctx.textBaseline = "middle";
-            ctx.fillText(String(aresta.distancia), meioX, meioY);
+            ctx.fillText(String(Math.round(aresta.distancia)), meioX, meioY);
         }
     };
 
@@ -162,7 +175,18 @@ export function desenharGrafo(
             ctx.fillText(vertice.rotulo ?? vertice.id, vertice.x, vertice.y);
         });
     } else {
-        // Grafo grande (mapa): desenha só os marcadores de origem e destino.
+        // Grafo grande (mapa): por padrão só os marcadores de origem/destino.
+        // Se o usuário pedir, desenha também todos os vértices como pontos.
+        if (mostrarVertices) {
+            const raioTela = raioVertice / escala;
+            ctx.fillStyle = "#3b82f6";
+            grafo.vertices.forEach((vertice) => {
+                ctx.beginPath();
+                ctx.arc(vertice.x, vertice.y, raioTela, 0, Math.PI * 2);
+                ctx.fill();
+            });
+        }
+
         const marcar = (id: string | null, cor: string) => {
             if (!id) return;
             const vertice = mapaVertices.get(id);

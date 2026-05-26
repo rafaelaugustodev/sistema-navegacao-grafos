@@ -111,11 +111,13 @@ export function parseOsm(texto: string): Grafo {
   // Mapa usado para converter o id original do OSM em índice interno
   const mapaIdOriginalParaIndice = new Map<string, number>();
 
-  // Cada way representa uma sequência de nós conectados
-  const ways: number[][] = [];
+  // Cada way representa uma sequência de nós conectados.
+  // mãoUnica indica se a via é de mão única (tag oneway no OSM).
+  const ways: Array<{ indices: number[]; maoUnica: boolean }> = [];
 
   let dentroDeWay = false;
   let wayAtual: number[] = [];
+  let wayMaoUnica = false;
 
   // Lê o arquivo linha por linha
   for (const linha of linhas) {
@@ -151,6 +153,7 @@ export function parseOsm(texto: string): Grafo {
     else if (linha.includes("<way")) {
       dentroDeWay = true;
       wayAtual = [];
+      wayMaoUnica = false;
     }
 
     // Nó pertencente a uma way
@@ -166,12 +169,27 @@ export function parseOsm(texto: string): Grafo {
       }
     }
 
+    // Tag da way: detecta vias de mão única (oneway=yes/true/1/-1)
+    else if (dentroDeWay && linha.includes("<tag")) {
+      if (extrairAtributo(linha, "k") === "oneway") {
+        const valor = extrairAtributo(linha, "v");
+        if (
+          valor === "yes" ||
+          valor === "true" ||
+          valor === "1" ||
+          valor === "-1"
+        ) {
+          wayMaoUnica = true;
+        }
+      }
+    }
+
     // Fim de uma way
     else if (dentroDeWay && linha.includes("</way>")) {
       dentroDeWay = false;
 
       if (wayAtual.length > 1) {
-        ways.push(wayAtual);
+        ways.push({ indices: wayAtual, maoUnica: wayMaoUnica });
       }
     }
   }
@@ -216,11 +234,16 @@ export function parseOsm(texto: string): Grafo {
 
   let idAresta = 0;
 
+  // Indica se o mapa possui ao menos uma via de mão única
+  let possuiMaoUnica = false;
+
   // Cada par consecutivo de nós em uma way vira uma aresta
   for (const way of ways) {
-    for (let i = 0; i < way.length - 1; i++) {
-      const origemIdx = way[i];
-      const destinoIdx = way[i + 1];
+    if (way.maoUnica) possuiMaoUnica = true;
+
+    for (let i = 0; i < way.indices.length - 1; i++) {
+      const origemIdx = way.indices[i];
+      const destinoIdx = way.indices[i + 1];
 
       const dx = nos[destinoIdx].x - nos[origemIdx].x;
       const dy = nos[destinoIdx].y - nos[origemIdx].y;
@@ -230,7 +253,7 @@ export function parseOsm(texto: string): Grafo {
         origem: origemIdx.toString(),
         destino: destinoIdx.toString(),
         distancia: Math.sqrt(dx * dx + dy * dy),
-        direcionada: false,
+        direcionada: way.maoUnica,
       });
     }
   }
@@ -239,6 +262,9 @@ export function parseOsm(texto: string): Grafo {
     vertices,
     arestas,
     ehPonderado: true,
-    ehDirecionado: false,
+    ehDirecionado: possuiMaoUnica,
+    // REDUTOR foi aplicado às coordenadas (que vieram em metros UTM),
+    // então cada unidade do canvas vale REDUTOR metros reais.
+    metrosPorUnidade: REDUTOR,
   };
 }
