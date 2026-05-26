@@ -5,7 +5,7 @@ import { desenharGrafo } from "./desenharGrafo";
 import "./GrafoCanvas.css";
 
 // A partir desse limite, o grafo usa renderização simplificada (modo mapa)
-const LIMITE_GRAFO_GRANDE = 100;
+export const LIMITE_GRAFO_GRANDE = 100;
 
 // Margem (px) deixada ao redor do grafo no encaixe inicial
 const PADDING_ENCAIXE = 24;
@@ -18,6 +18,8 @@ type GrafoCanvasProps = {
     origemSelecionada: string | null;
     destinoSelecionado: string | null;
     menorCaminho: string[];
+    mostrarVertices: boolean;
+    mostrarPesos: boolean;
     onClickVertice: (verticeId: string) => void;
     onClickFora: () => void;
 };
@@ -63,6 +65,8 @@ export const GrafoCanvas = ({
     origemSelecionada,
     destinoSelecionado,
     menorCaminho,
+    mostrarVertices,
+    mostrarPesos,
     onClickVertice,
     onClickFora
 }: GrafoCanvasProps) => {
@@ -171,7 +175,9 @@ export const GrafoCanvas = ({
             raioVertice,
             origemSelecionada,
             destinoSelecionado,
-            menorCaminho
+            menorCaminho,
+            mostrarVertices,
+            mostrarPesos
         });
     }, [
         grafo,
@@ -183,7 +189,9 @@ export const GrafoCanvas = ({
         raioVertice,
         origemSelecionada,
         destinoSelecionado,
-        menorCaminho
+        menorCaminho,
+        mostrarVertices,
+        mostrarPesos
     ]);
 
     return (

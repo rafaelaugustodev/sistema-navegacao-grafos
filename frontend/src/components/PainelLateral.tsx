@@ -9,11 +9,18 @@ type PainelLateralProps = {
     origemSelecionada: string | null;
     destinoSelecionado: string | null;
     distanciaTotal: number | null;
+    metrosPorUnidade: number | null;
+    tipoViaCaminho: "unica" | "dupla" | "mista" | null;
     tempoExecucaoMs: number | null;
     totalVertices: number;
     totalArestas: number;
     verticesCaminho: Vertice[];
     caminhoInexistente: boolean;
+    ehGrafoGrande: boolean;
+    mostrarVertices: boolean;
+    mostrarPesos: boolean;
+    onAlternarVertices: () => void;
+    onAlternarPesos: () => void;
     onDesfazerSelecao: () => void;
     onImportarArquivo: (arquivo: File) => void;
     carregandoUpload: boolean;
@@ -27,11 +34,18 @@ export const PainelLateral = ({
     origemSelecionada,
     destinoSelecionado,
     distanciaTotal,
+    metrosPorUnidade,
+    tipoViaCaminho,
     tempoExecucaoMs,
     totalVertices,
     totalArestas,
     verticesCaminho,
     caminhoInexistente,
+    ehGrafoGrande,
+    mostrarVertices,
+    mostrarPesos,
+    onAlternarVertices,
+    onAlternarPesos,
     onDesfazerSelecao,
     onImportarArquivo,
     carregandoUpload,
@@ -78,6 +92,26 @@ export const PainelLateral = ({
     const possuiCaminho =
         verticesCaminho.length > 0 &&
         !caminhoInexistente;
+
+    // Distância em pixels (unidade do canvas), sem casas decimais
+    const distanciaPixels =
+        distanciaTotal !== null ? Math.round(distanciaTotal) : null;
+
+    // Distância aproximada em metros, quando a escala do mapa é conhecida
+    const distanciaMetros =
+        distanciaTotal !== null && metrosPorUnidade !== null
+            ? Math.round(distanciaTotal * metrosPorUnidade)
+            : null;
+
+    // Texto amigável do tipo de via do trajeto encontrado
+    const rotuloTipoVia =
+        tipoViaCaminho === "unica"
+            ? "Mão única"
+            : tipoViaCaminho === "dupla"
+                ? "Mão dupla"
+                : tipoViaCaminho === "mista"
+                    ? "Mista (mão única e dupla)"
+                    : null;
 
     return (
         <aside className="painel">
@@ -138,6 +172,35 @@ export const PainelLateral = ({
                 )}
             </section>
 
+            {/* Opções de exibição: só fazem sentido em mapas grandes,
+                onde vértices e pesos ficam ocultos por padrão. */}
+            {ehGrafoGrande && (
+                <section className="painel-bloco">
+
+                    <h2 className="painel-subtitulo">
+                        Exibição
+                    </h2>
+
+                    <label className="painel-checkbox">
+                        <input
+                            type="checkbox"
+                            checked={mostrarVertices}
+                            onChange={onAlternarVertices}
+                        />
+                        Mostrar vértices
+                    </label>
+
+                    <label className="painel-checkbox">
+                        <input
+                            type="checkbox"
+                            checked={mostrarPesos}
+                            onChange={onAlternarPesos}
+                        />
+                        Mostrar pesos das arestas
+                    </label>
+                </section>
+            )}
+
             <section className="painel-bloco">
 
                 <h2 className="painel-subtitulo">
@@ -196,10 +259,36 @@ export const PainelLateral = ({
                 )}
 
                 <p className="painel-linha">
-                    <span className="painel-rotulo">Distância total:</span>{" "}
-                    {distanciaTotal !== null ? (
+                    <span className="painel-rotulo">Distância total:</span>
+                </p>
+
+                <p className="painel-linha painel-subitem">
+                    <span className="painel-rotulo">Em pixels:</span>{" "}
+                    {distanciaPixels !== null ? (
                         <span className="cor-destaque">
-                            {distanciaTotal}
+                            {distanciaPixels}
+                        </span>
+                    ) : (
+                        <span className="painel-placeholder">—</span>
+                    )}
+                </p>
+
+                <p className="painel-linha painel-subitem">
+                    <span className="painel-rotulo">Em metros (aprox.):</span>{" "}
+                    {distanciaMetros !== null ? (
+                        <span className="cor-destaque">
+                            {distanciaMetros}
+                        </span>
+                    ) : (
+                        <span className="painel-placeholder">—</span>
+                    )}
+                </p>
+
+                <p className="painel-linha">
+                    <span className="painel-rotulo">Tipo de via no trajeto:</span>{" "}
+                    {rotuloTipoVia !== null ? (
+                        <span className="cor-destaque">
+                            {rotuloTipoVia}
                         </span>
                     ) : (
                         <span className="painel-placeholder">—</span>

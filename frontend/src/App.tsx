@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { GrafoCanvas } from "./canvas/GrafoCanvas";
+import { useMemo, useState } from "react";
+import { GrafoCanvas, LIMITE_GRAFO_GRANDE } from "./canvas/GrafoCanvas";
 import { PainelLateral } from "./components/PainelLateral";
 import { grafosDisponiveis as grafosBase } from "./data/grafoExemplo";
 import { dijkstra } from "../../shared/algoritmos/dijkstra";
@@ -45,25 +45,39 @@ function App() {
     // Vértice de destino selecionado pelo usuário
     const [destinoSelecionado, setDestinoSelecionado] = useState<string | null>(null);
 
-    // Sequência de vértices do menor caminho
-    const [menorCaminho, setMenorCaminho] = useState<string[]>([]);
+    // Em mapas importados (grafos grandes), controlam o que o canvas exibe
+    const [mostrarVertices, setMostrarVertices] = useState<boolean>(false);
+    const [mostrarPesos, setMostrarPesos] = useState<boolean>(false);
+
+    // Indica se o grafo atual usa a renderização simplificada de mapa
+    const ehGrafoGrande = grafo.vertices.length > LIMITE_GRAFO_GRANDE;
+
+    // Resultado do Dijkstra: estado derivado de origem, destino e grafo.
+    // Recalculado só quando uma dessas entradas muda; limpar a seleção
+    // (origem/destino = null) zera o resultado automaticamente.
+    const resultadoDijkstra = useMemo(() => {
+        if (!origemSelecionada || !destinoSelecionado) return null;
+        return dijkstra(grafo, origemSelecionada, destinoSelecionado);
+    }, [origemSelecionada, destinoSelecionado, grafo]);
+
+    // Sequência de vértices do menor caminho (referência estável por resultado)
+    const menorCaminho = useMemo(
+        () => resultadoDijkstra?.caminho ?? [],
+        [resultadoDijkstra]
+    );
 
     // Distância total do menor caminho
-    const [distanciaTotal, setDistanciaTotal] = useState<number | null>(null);
+    const distanciaTotal = resultadoDijkstra?.distanciaTotal ?? null;
 
     // Tempo gasto para executar o Dijkstra
-    const [tempoExecucaoMs, setTempoExecucaoMs] = useState<number | null>(null);
+    const tempoExecucaoMs = resultadoDijkstra?.tempoExecucaoMs ?? null;
 
-    // Indica se não existe caminho entre origem e destino
-    const [caminhoInexistente, setCaminhoInexistente] = useState<boolean>(false);
-
-    // Limpa o resultado do Dijkstra
-    const limparResultado = () => {
-        setMenorCaminho([]);
-        setDistanciaTotal(null);
-        setTempoExecucaoMs(null);
-        setCaminhoInexistente(false);
-    };
+    // Não existe caminho quando origem e destino foram escolhidos mas o
+    // Dijkstra não retornou rota.
+    const caminhoInexistente =
+        origemSelecionada !== null &&
+        destinoSelecionado !== null &&
+        resultadoDijkstra === null;
 
     // Trata clique em um vértice do canvas
     const handleClickVertice = (verticeId: string) => {
@@ -82,14 +96,12 @@ function App() {
         // Terceiro clique reinicia a seleção
         setOrigemSelecionada(verticeId);
         setDestinoSelecionado(null);
-        limparResultado();
     };
 
-    // Limpa origem, destino e resultado
+    // Limpa origem e destino (o resultado é derivado e zera junto)
     const handleDesfazerSelecao = () => {
         setOrigemSelecionada(null);
         setDestinoSelecionado(null);
-        limparResultado();
     };
 
     // Clique fora de um vértice limpa a seleção se já houver caminho traçado
@@ -104,7 +116,6 @@ function App() {
         setGrafoSelecionado(chave);
         setOrigemSelecionada(null);
         setDestinoSelecionado(null);
-        limparResultado();
     };
 
     // Importa um arquivo, ajusta a escala e seleciona o grafo importado
@@ -120,8 +131,6 @@ function App() {
 
             setOrigemSelecionada(null);
             setDestinoSelecionado(null);
-
-            limparResultado();
         } catch (erro) {
             setErroUpload(
                 erro instanceof Error
@@ -133,37 +142,51 @@ function App() {
         }
     };
 
-    // Executa o Dijkstra quando origem e destino forem selecionados
-    useEffect(() => {
-        if (!origemSelecionada || !destinoSelecionado) return;
-
-        const resultado = dijkstra(
-            grafo,
-            origemSelecionada,
-            destinoSelecionado
-        );
-
-        if (!resultado) {
-            setMenorCaminho([]);
-            setDistanciaTotal(null);
-            setTempoExecucaoMs(null);
-            setCaminhoInexistente(true);
-            return;
-        }
-
-        setMenorCaminho(resultado.caminho);
-        setDistanciaTotal(resultado.distanciaTotal);
-        setTempoExecucaoMs(resultado.tempoExecucaoMs);
-        setCaminhoInexistente(false);
-
-    }, [origemSelecionada, destinoSelecionado, grafo]);
-
     // Converte os ids do menor caminho em objetos Vertice
     const verticesCaminho = menorCaminho
         .map((id) => grafo.vertices.find((vertice) => vertice.id === id))
         .filter((vertice): vertice is NonNullable<typeof vertice> =>
             vertice !== undefined
         );
+
+    // Classifica o trajeto quanto ao tipo de via (mão única / dupla / mista).
+    // Para cada par de vértices consecutivos do caminho, busca a aresta que os
+    // liga e lê se ela é direcionada. Mistura de tipos vira "Mista".
+    const tipoViaCaminho = useMemo<
+        "unica" | "dupla" | "mista" | null
+    >(() => {
+        if (menorCaminho.length < 2) return null;
+
+        // Lookup O(1): para cada par origem|destino, guarda se é mão única
+        const mapaDirecao = new Map<string, boolean>();
+        for (const aresta of grafo.arestas) {
+            mapaDirecao.set(
+                `${aresta.origem}|${aresta.destino}`,
+                aresta.direcionada
+            );
+            // Aresta de mão dupla também responde no sentido inverso
+            if (!aresta.direcionada) {
+                mapaDirecao.set(`${aresta.destino}|${aresta.origem}`, false);
+            }
+        }
+
+        let temUnica = false;
+        let temDupla = false;
+
+        for (let i = 0; i < menorCaminho.length - 1; i++) {
+            const direta = mapaDirecao.get(
+                `${menorCaminho[i]}|${menorCaminho[i + 1]}`
+            );
+            // Se só existe no sentido inverso, é mão dupla (já registrada acima)
+            const ehUnica = direta === true;
+            if (ehUnica) temUnica = true;
+            else temDupla = true;
+        }
+
+        if (temUnica && temDupla) return "mista";
+        if (temUnica) return "unica";
+        return "dupla";
+    }, [menorCaminho, grafo]);
 
     return (
         <div className="app-layout">
@@ -175,11 +198,22 @@ function App() {
                     origemSelecionada={origemSelecionada}
                     destinoSelecionado={destinoSelecionado}
                     distanciaTotal={distanciaTotal}
+                    metrosPorUnidade={grafo.metrosPorUnidade ?? null}
+                    tipoViaCaminho={tipoViaCaminho}
                     tempoExecucaoMs={tempoExecucaoMs}
                     totalVertices={grafo.vertices.length}
                     totalArestas={grafo.arestas.length}
                     verticesCaminho={verticesCaminho}
                     caminhoInexistente={caminhoInexistente}
+                    ehGrafoGrande={ehGrafoGrande}
+                    mostrarVertices={mostrarVertices}
+                    mostrarPesos={mostrarPesos}
+                    onAlternarVertices={() =>
+                        setMostrarVertices((valor) => !valor)
+                    }
+                    onAlternarPesos={() =>
+                        setMostrarPesos((valor) => !valor)
+                    }
                     onDesfazerSelecao={handleDesfazerSelecao}
                     onImportarArquivo={handleImportarArquivo}
                     carregandoUpload={carregandoUpload}
@@ -202,6 +236,8 @@ function App() {
                     origemSelecionada={origemSelecionada}
                     destinoSelecionado={destinoSelecionado}
                     menorCaminho={menorCaminho}
+                    mostrarVertices={mostrarVertices}
+                    mostrarPesos={mostrarPesos}
                     onClickVertice={handleClickVertice}
                     onClickFora={handleClickFora}
                 />
