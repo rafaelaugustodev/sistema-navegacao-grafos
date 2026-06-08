@@ -1,15 +1,27 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { GrafoCanvas, LIMITE_GRAFO_GRANDE } from "./canvas/GrafoCanvas";
 import { PainelLateral } from "./components/PainelLateral";
+import { PainelEdicao } from "./edicao/PainelEdicao";
+import { CanvasEdicao, type ModoEdicao } from "./edicao/CanvasEdicao";
 import { grafosDisponiveis as grafosBase } from "./data/grafoExemplo";
 import { dijkstra } from "../../shared/algoritmos/dijkstra";
+import { grafoVazio } from "../../shared/utils/editorGrafo";
 import { importarGrafo } from "./api/upload";
+import { copiarCanvasParaClipboard } from "./utils/copiarImagem";
 import type { Grafo } from "../../shared/types/grafo";
 import "./App.css";
+
+type TipoModoEdicao = "criar" | "editar";
 
 function App() {
     // Grafo importado via upload
     const [grafoImportado, setGrafoImportado] = useState<Grafo | null>(null);
+
+    // Grafos criados/editados pelo usuário em runtime (RF05). Não persistem
+    // após reload — apenas memória da sessão atual.
+    const [grafosCustomizados, setGrafosCustomizados] = useState<
+        Record<string, { nome: string; grafo: Grafo }>
+    >({});
 
     // Estado de carregamento do upload
     const [carregandoUpload, setCarregandoUpload] = useState<boolean>(false);
@@ -17,18 +29,21 @@ function App() {
     // Mensagem de erro do upload
     const [erroUpload, setErroUpload] = useState<string | null>(null);
 
-    // Junta os grafos fixos com o grafo importado, se existir
+    // Junta os grafos fixos, o importado e os personalizados.
     const grafosDisponiveis = useMemo(() => {
-        if (!grafoImportado) return grafosBase;
+        const base: Record<string, { nome: string; grafo: Grafo }> = {
+            ...grafosBase
+        };
 
-        return {
-            ...grafosBase,
-            importado: {
+        if (grafoImportado) {
+            base.importado = {
                 nome: "Importado (último upload)",
                 grafo: grafoImportado
-            }
-        };
-    }, [grafoImportado]);
+            };
+        }
+
+        return { ...base, ...grafosCustomizados };
+    }, [grafoImportado, grafosCustomizados]);
 
     // Controla se o painel lateral está visível
     const [painelVisivel, setPainelVisivel] = useState<boolean>(true);
@@ -36,8 +51,9 @@ function App() {
     // Grafo atualmente selecionado no painel lateral
     const [grafoSelecionado, setGrafoSelecionado] = useState<string>("exemplo");
 
-    // Objeto do grafo atualmente ativo
-    const grafo = grafosDisponiveis[grafoSelecionado].grafo;
+    // Objeto do grafo atualmente ativo (com fallback ao padrão caso a chave suma)
+    const grafo =
+        grafosDisponiveis[grafoSelecionado]?.grafo ?? grafosBase.exemplo.grafo;
 
     // Vértice de origem selecionado pelo usuário
     const [origemSelecionada, setOrigemSelecionada] = useState<string | null>(null);
@@ -48,6 +64,27 @@ function App() {
     // Em mapas importados (grafos grandes), controlam o que o canvas exibe
     const [mostrarVertices, setMostrarVertices] = useState<boolean>(false);
     const [mostrarPesos, setMostrarPesos] = useState<boolean>(false);
+
+    // RF05: modo de edição ativo. Quando não-nulo, esconde a interface principal.
+    const [tipoModoEdicao, setTipoModoEdicao] = useState<TipoModoEdicao | null>(
+        null
+    );
+
+    // Grafo sendo construído/editado no momento.
+    const [grafoEditando, setGrafoEditando] = useState<Grafo | null>(null);
+
+    // Ferramenta ativa no editor (selecionar, adicionar, etc.)
+    const [ferramentaEdicao, setFerramentaEdicao] =
+        useState<ModoEdicao>("selecionar");
+
+    // Mensagem-guia exibida pelo editor (vinda do CanvasEdicao).
+    const [mensagemEdicao, setMensagemEdicao] = useState<string | null>(null);
+
+    // Origem do grafo sendo editado (para nomear a entrada salva).
+    const [nomeOrigemEdicao, setNomeOrigemEdicao] = useState<string>("");
+
+    // Feedback transitório do RF08 (copiar imagem).
+    const [mensagemCopia, setMensagemCopia] = useState<string | null>(null);
 
     // Indica se o grafo atual usa a renderização simplificada de mapa
     const ehGrafoGrande = grafo.vertices.length > LIMITE_GRAFO_GRANDE;
@@ -142,6 +179,95 @@ function App() {
         }
     };
 
+    // RF05: inicia modo "criar grafo" do zero.
+    const handleCriarGrafo = () => {
+        setGrafoEditando(grafoVazio(true, false));
+        setTipoModoEdicao("criar");
+        setFerramentaEdicao("adicionar");
+        setNomeOrigemEdicao("");
+        setMensagemEdicao(null);
+    };
+
+    // RF05: inicia modo "editar grafo" a partir do grafo atualmente selecionado.
+    const handleEditarGrafo = () => {
+        // Cópia profunda para não mutar o grafo original enquanto edita.
+        const copia: Grafo = JSON.parse(JSON.stringify(grafo));
+        setGrafoEditando(copia);
+        setTipoModoEdicao("editar");
+        setFerramentaEdicao("selecionar");
+        setNomeOrigemEdicao(
+            grafosDisponiveis[grafoSelecionado]?.nome ?? "grafo"
+        );
+        setMensagemEdicao(null);
+    };
+
+    // Troca tipo (ponderado/direcionado) do grafo em edição e propaga para
+    // todas as arestas existentes — assim o usuário não fica com mistura.
+    const handleMudarTipo = (
+        ehPonderado: boolean,
+        ehDirecionado: boolean
+    ) => {
+        if (!grafoEditando) return;
+        setGrafoEditando({
+            ...grafoEditando,
+            ehPonderado,
+            ehDirecionado,
+            arestas: grafoEditando.arestas.map((a) => ({
+                ...a,
+                direcionada: ehDirecionado,
+                // Sem peso → 1 (peso neutro). Não zera pesos já definidos.
+                distancia: ehPonderado ? a.distancia : 1
+            }))
+        });
+    };
+
+    // RF05: salva o grafo em edição como entrada nova no dropdown.
+    const handleSalvarEdicao = () => {
+        if (!grafoEditando) return;
+
+        const chave = `personalizado_${Date.now()}`;
+        const nome =
+            tipoModoEdicao === "criar"
+                ? `Personalizado #${Object.keys(grafosCustomizados).length + 1}`
+                : `Editado: ${nomeOrigemEdicao}`;
+
+        setGrafosCustomizados((prev) => ({
+            ...prev,
+            [chave]: { nome, grafo: grafoEditando }
+        }));
+
+        setGrafoSelecionado(chave);
+        setOrigemSelecionada(null);
+        setDestinoSelecionado(null);
+        setTipoModoEdicao(null);
+        setGrafoEditando(null);
+        setMensagemEdicao(null);
+    };
+
+    const handleCancelarEdicao = () => {
+        setTipoModoEdicao(null);
+        setGrafoEditando(null);
+        setMensagemEdicao(null);
+    };
+
+    // RF08: copia o canvas atualmente exibido como imagem PNG.
+    const handleCopiarImagem = useCallback(async () => {
+        // Há um único canvas por vez (modo navegação ou edição).
+        const canvas = document.querySelector<HTMLCanvasElement>(
+            ".canvas-container canvas"
+        );
+        if (!canvas) {
+            setMensagemCopia("Canvas não encontrado.");
+            return;
+        }
+
+        const resultado = await copiarCanvasParaClipboard(canvas);
+        setMensagemCopia(resultado.mensagem);
+
+        // Limpa a mensagem após alguns segundos para não poluir o painel.
+        window.setTimeout(() => setMensagemCopia(null), 4000);
+    }, []);
+
     // Converte os ids do menor caminho em objetos Vertice
     const verticesCaminho = menorCaminho
         .map((id) => grafo.vertices.find((vertice) => vertice.id === id))
@@ -188,6 +314,40 @@ function App() {
         return "dupla";
     }, [menorCaminho, grafo]);
 
+    // === Renderização em modo edição (RF05) ===
+    if (tipoModoEdicao !== null && grafoEditando !== null) {
+        return (
+            <div className="app-layout">
+                <div className="painel-wrapper">
+                    <PainelEdicao
+                        titulo={
+                            tipoModoEdicao === "criar"
+                                ? "Criar Grafo"
+                                : "Editar Grafo"
+                        }
+                        grafo={grafoEditando}
+                        modo={ferramentaEdicao}
+                        mensagem={mensagemEdicao}
+                        onMudarTipo={handleMudarTipo}
+                        onMudarModo={setFerramentaEdicao}
+                        onSalvar={handleSalvarEdicao}
+                        onCancelar={handleCancelarEdicao}
+                    />
+                </div>
+
+                <main className="app-area-canvas">
+                    <CanvasEdicao
+                        grafo={grafoEditando}
+                        modo={ferramentaEdicao}
+                        onGrafoMudou={setGrafoEditando}
+                        onMensagem={setMensagemEdicao}
+                    />
+                </main>
+            </div>
+        );
+    }
+
+    // === Renderização normal (navegação / Dijkstra) ===
     return (
         <div className="app-layout">
             <div className={`painel-wrapper${painelVisivel ? "" : " oculto"}`}>
@@ -218,6 +378,10 @@ function App() {
                     onImportarArquivo={handleImportarArquivo}
                     carregandoUpload={carregandoUpload}
                     erroUpload={erroUpload}
+                    onCriarGrafo={handleCriarGrafo}
+                    onEditarGrafo={handleEditarGrafo}
+                    onCopiarImagem={handleCopiarImagem}
+                    mensagemCopia={mensagemCopia}
                 />
             </div>
 

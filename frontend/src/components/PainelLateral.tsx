@@ -25,6 +25,10 @@ type PainelLateralProps = {
     onImportarArquivo: (arquivo: File) => void;
     carregandoUpload: boolean;
     erroUpload: string | null;
+    onCriarGrafo: () => void;
+    onEditarGrafo: () => void;
+    onCopiarImagem: () => void;
+    mensagemCopia: string | null;
 };
 
 export const PainelLateral = ({
@@ -49,7 +53,11 @@ export const PainelLateral = ({
     onDesfazerSelecao,
     onImportarArquivo,
     carregandoUpload,
-    erroUpload
+    erroUpload,
+    onCriarGrafo,
+    onEditarGrafo,
+    onCopiarImagem,
+    mensagemCopia
 }: PainelLateralProps) => {
 
     // Verifica se existe origem ou destino selecionado
@@ -119,6 +127,25 @@ export const PainelLateral = ({
             <h1 className="painel-titulo">
                 Sistema de Navegação
             </h1>
+
+            {/* RF05: ações de criação e edição do grafo no topo do painel */}
+            <section className="painel-bloco">
+                <button
+                    type="button"
+                    onClick={onCriarGrafo}
+                    className="painel-botao primario"
+                >
+                    Criar Grafo +
+                </button>
+
+                <button
+                    type="button"
+                    onClick={onEditarGrafo}
+                    className="painel-botao"
+                >
+                    Editar Grafo
+                </button>
+            </section>
 
             <section className="painel-bloco">
 
@@ -344,6 +371,20 @@ export const PainelLateral = ({
                 >
                     Desfazer seleção
                 </button>
+
+                {/* RF08: copia a imagem do grafo para a área de transferência */}
+                <button
+                    type="button"
+                    onClick={onCopiarImagem}
+                    className="painel-botao"
+                    title="Copia o canvas atual como imagem PNG"
+                >
+                    Copiar imagem do grafo
+                </button>
+
+                {mensagemCopia && (
+                    <p className="painel-dica">{mensagemCopia}</p>
+                )}
             </section>
 
             <section className="painel-bloco">
