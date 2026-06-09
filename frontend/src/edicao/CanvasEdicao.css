@@ -1,0 +1,19 @@
+.edicao-rodape {
+    position: absolute;
+    left: 16px;
+    bottom: 16px;
+    padding: 6px 12px;
+    background: rgba(31, 41, 55, 0.92);
+    border: 1px solid #4b5563;
+    border-radius: 8px;
+    color: white;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    user-select: none;
+}
+
+.edicao-rodape-rotulo {
+    color: #9ca3af;
+}
