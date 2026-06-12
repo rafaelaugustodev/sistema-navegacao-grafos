@@ -5,7 +5,7 @@ import {
     moverVertice,
     removerVertice,
     adicionarAresta
-} from "../../../shared/utils/editorGrafo";
+} from "../utils/editorGrafo";
 import { desenharGrafo } from "../canvas/desenharGrafo";
 import { LIMITE_GRAFO_GRANDE } from "../canvas/GrafoCanvas";
 import { Modal } from "../components/Modal";

@@ -5,7 +5,7 @@ import { PainelEdicao } from "./edicao/PainelEdicao";
 import { CanvasEdicao, type ModoEdicao } from "./edicao/CanvasEdicao";
 import { grafosDisponiveis as grafosBase } from "./data/grafoExemplo";
 import { dijkstra } from "./algoritmos/dijkstra";
-import { grafoVazio } from "../../shared/utils/editorGrafo";
+import { grafoVazio } from "./utils/editorGrafo";
 import { importarGrafo } from "./api/upload";
 import { copiarCanvasParaClipboard } from "./utils/copiarImagem";
 import type { Grafo } from "./types/grafo";
