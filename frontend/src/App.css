@@ -5,9 +5,6 @@
     overflow: hidden;
 }
 
-/* Wrapper do painel: anima a entrada/saída deslizando para a esquerda.
-   O painel interno mantém largura fixa (não reflui durante a animação);
-   a margem negativa o tira da tela e o canvas preenche o espaço. */
 .painel-wrapper {
     flex-shrink: 0;
     transition: margin-left 0.25s ease;
@@ -28,7 +25,7 @@
     position: absolute;
     top: 12px;
     left: 12px;
-    z-index: 10;
+    z-index: 60;
     width: 36px;
     height: 36px;
     border: 1px solid #4b5563;
@@ -41,8 +38,60 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    transition: left 0.25s ease, right 0.25s ease;
 }
 
 .botao-toggle-painel:hover {
     background: rgba(55, 65, 81, 0.95);
+}
+
+.troca-fade {
+    position: absolute;
+    inset: 0;
+    animation: troca-fade-in 0.2s ease;
+}
+
+@keyframes troca-fade-in {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@media (max-width: 768px) {
+    .painel-wrapper {
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 100vh;
+        z-index: 50;
+        transition: transform 0.25s ease;
+        box-shadow: 4px 0 20px rgba(0, 0, 0, 0.45);
+    }
+
+    .painel-wrapper.oculto {
+        margin-left: 0;
+        transform: translateX(-100%);
+    }
+
+    .botao-toggle-painel {
+        width: 44px;
+        height: 44px;
+        font-size: 20px;
+    }
+
+    .painel-wrapper:not(.oculto) ~ .app-area-canvas .botao-toggle-painel {
+        left: auto;
+        right: 16px;
+    }
+}
+
+@media (max-width: 380px) {
+    .painel-wrapper:not(.oculto) ~ .app-area-canvas .botao-toggle-painel {
+        right: 12px;
+        width: 40px;
+        height: 40px;
+    }
 }

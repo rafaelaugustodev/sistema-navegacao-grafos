@@ -204,6 +204,9 @@ export const GrafoCanvas = ({
                 onMouseMove={handlers.onMouseMove}
                 onMouseUp={handlers.onMouseUp}
                 onWheel={handlers.onWheel}
+                onTouchStart={handlers.onTouchStart}
+                onTouchMove={handlers.onTouchMove}
+                onTouchEnd={handlers.onTouchEnd}
                 style={{ cursor: arrastando ? "grabbing" : "grab" }}
             />
 
@@ -236,9 +239,9 @@ export const GrafoCanvas = ({
                     type="button"
                     className="zoom-botao"
                     onClick={resetarVisao}
-                    title="Ajustar à tela"
+                    title="Resetar visão"
                 >
-                    ⛶
+                    ↻
                 </button>
             </div>
         </div>

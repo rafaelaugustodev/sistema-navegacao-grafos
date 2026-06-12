@@ -151,3 +151,48 @@
 .cor-destaque {
     color: #f97316;
 }
+
+@media (max-width: 768px) {
+    .painel {
+        width: min(78vw, 300px);
+        padding: 16px;
+        gap: 16px;
+    }
+
+    .painel-titulo {
+        font-size: 17px;
+    }
+
+    .painel-select,
+    .painel-botao {
+        min-height: 44px;
+        font-size: 15px;
+    }
+
+    .painel-checkbox {
+        min-height: 36px;
+    }
+
+    .painel-checkbox input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+    }
+}
+
+@media (max-width: 380px) {
+    .painel {
+        padding: 14px;
+        gap: 14px;
+    }
+
+    .painel-titulo {
+        font-size: 16px;
+        padding-bottom: 8px;
+    }
+
+    .painel-linha,
+    .painel-checkbox {
+        font-size: 13px;
+    }
+}
+

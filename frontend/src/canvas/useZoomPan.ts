@@ -65,6 +65,29 @@ export function useZoomPan({
         moveu: false
     });
 
+    const offsetPendenteRef = useRef<{ x: number; y: number } | null>(null);
+    const rafIdRef = useRef<number | null>(null);
+
+    const agendarOffset = (novo: { x: number; y: number }) => {
+        offsetPendenteRef.current = novo;
+        if (rafIdRef.current !== null) return;
+        rafIdRef.current = requestAnimationFrame(() => {
+            rafIdRef.current = null;
+            if (offsetPendenteRef.current) {
+                setOffset(offsetPendenteRef.current);
+                offsetPendenteRef.current = null;
+            }
+        });
+    };
+
+    useEffect(() => {
+        return () => {
+            if (rafIdRef.current !== null) {
+                cancelAnimationFrame(rafIdRef.current);
+            }
+        };
+    }, []);
+
     // Troca de grafo marca que precisa reencaixar.
     useEffect(() => {
         precisaAjustar.current = true;
@@ -116,7 +139,7 @@ export function useZoomPan({
 
         if (Math.abs(dx) > LIMITE_CLIQUE || Math.abs(dy) > LIMITE_CLIQUE) {
             arrasto.current.moveu = true;
-            setOffset({
+            agendarOffset({
                 x: arrasto.current.offsetInicialX + dx,
                 y: arrasto.current.offsetInicialY + dy
             });
@@ -165,6 +188,58 @@ export function useZoomPan({
         aplicarZoom(fator, mouseX, mouseY);
     };
 
+    const onTouchStart = (event: React.TouchEvent<HTMLCanvasElement>) => {
+        if (event.touches.length !== 1) return;
+        const touch = event.touches[0];
+        const rect = event.currentTarget.getBoundingClientRect();
+        arrasto.current = {
+            ativo: true,
+            inicioX: touch.clientX - rect.left,
+            inicioY: touch.clientY - rect.top,
+            offsetInicialX: offset.x,
+            offsetInicialY: offset.y,
+            moveu: false
+        };
+        setArrastando(true);
+    };
+
+    const onTouchMove = (event: React.TouchEvent<HTMLCanvasElement>) => {
+        if (!arrasto.current.ativo) return;
+        if (event.touches.length !== 1) return;
+        const touch = event.touches[0];
+        const rect = event.currentTarget.getBoundingClientRect();
+        const x = touch.clientX - rect.left;
+        const y = touch.clientY - rect.top;
+        const dx = x - arrasto.current.inicioX;
+        const dy = y - arrasto.current.inicioY;
+        if (Math.abs(dx) > LIMITE_CLIQUE || Math.abs(dy) > LIMITE_CLIQUE) {
+            arrasto.current.moveu = true;
+            agendarOffset({
+                x: arrasto.current.offsetInicialX + dx,
+                y: arrasto.current.offsetInicialY + dy
+            });
+        }
+    };
+
+    const onTouchEnd = (event: React.TouchEvent<HTMLCanvasElement>) => {
+        if (!arrasto.current.ativo) return;
+        if (arrasto.current.moveu) {
+            arrasto.current.ativo = false;
+            setArrastando(false);
+            return;
+        }
+        arrasto.current.ativo = false;
+        setArrastando(false);
+
+        const touch = event.changedTouches[0];
+        if (!touch) return;
+        const rect = event.currentTarget.getBoundingClientRect();
+        const x = touch.clientX - rect.left;
+        const y = touch.clientY - rect.top;
+        const mundo = telaParaMundo(x, y);
+        onClique(mundo.x, mundo.y);
+    };
+
     const ampliar = () => aplicarZoom(FATOR_ZOOM_BOTAO, largura / 2, altura / 2);
     const reduzir = () => aplicarZoom(1 / FATOR_ZOOM_BOTAO, largura / 2, altura / 2);
 
@@ -180,7 +255,15 @@ export function useZoomPan({
         offset,
         escalaAjuste,
         arrastando,
-        handlers: { onMouseDown, onMouseMove, onMouseUp, onWheel },
+        handlers: {
+            onMouseDown,
+            onMouseMove,
+            onMouseUp,
+            onWheel,
+            onTouchStart,
+            onTouchMove,
+            onTouchEnd
+        },
         ampliar,
         reduzir,
         resetarVisao

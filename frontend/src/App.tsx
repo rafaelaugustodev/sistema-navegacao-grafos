@@ -179,6 +179,10 @@ function App() {
         }
     };
 
+    const ehMobile = () =>
+        typeof window !== "undefined" &&
+        window.matchMedia("(max-width: 768px)").matches;
+
     // RF05: inicia modo "criar grafo" do zero.
     const handleCriarGrafo = () => {
         setGrafoEditando(grafoVazio(true, false));
@@ -186,6 +190,7 @@ function App() {
         setFerramentaEdicao("adicionar");
         setNomeOrigemEdicao("");
         setMensagemEdicao(null);
+        setPainelVisivel(true);
     };
 
     // RF05: inicia modo "editar grafo" a partir do grafo atualmente selecionado.
@@ -199,6 +204,13 @@ function App() {
             grafosDisponiveis[grafoSelecionado]?.nome ?? "grafo"
         );
         setMensagemEdicao(null);
+        setPainelVisivel(true);
+    };
+
+    // Em mobile, escolher ferramenta fecha o painel pra liberar o canvas.
+    const handleMudarFerramenta = (modo: ModoEdicao) => {
+        setFerramentaEdicao(modo);
+        if (ehMobile()) setPainelVisivel(false);
     };
 
     // Troca tipo (ponderado/direcionado) do grafo em edição e propaga para
@@ -314,11 +326,15 @@ function App() {
         return "dupla";
     }, [menorCaminho, grafo]);
 
-    // === Renderização em modo edição (RF05) ===
-    if (tipoModoEdicao !== null && grafoEditando !== null) {
-        return (
-            <div className="app-layout">
-                <div className="painel-wrapper">
+    const emEdicao =
+        tipoModoEdicao !== null && grafoEditando !== null;
+
+    return (
+        <div className="app-layout">
+            <div
+                className={`painel-wrapper${painelVisivel ? "" : " oculto"}`}
+            >
+                {emEdicao && grafoEditando ? (
                     <PainelEdicao
                         titulo={
                             tipoModoEdicao === "criar"
@@ -329,82 +345,80 @@ function App() {
                         modo={ferramentaEdicao}
                         mensagem={mensagemEdicao}
                         onMudarTipo={handleMudarTipo}
-                        onMudarModo={setFerramentaEdicao}
+                        onMudarModo={handleMudarFerramenta}
                         onSalvar={handleSalvarEdicao}
                         onCancelar={handleCancelarEdicao}
                     />
-                </div>
-
-                <main className="app-area-canvas">
-                    <CanvasEdicao
-                        grafo={grafoEditando}
-                        modo={ferramentaEdicao}
-                        onGrafoMudou={setGrafoEditando}
-                        onMensagem={setMensagemEdicao}
+                ) : (
+                    <PainelLateral
+                        grafosDisponiveis={grafosDisponiveis}
+                        grafoSelecionado={grafoSelecionado}
+                        onSelecionarGrafo={handleSelecionarGrafo}
+                        origemSelecionada={origemSelecionada}
+                        destinoSelecionado={destinoSelecionado}
+                        distanciaTotal={distanciaTotal}
+                        metrosPorUnidade={grafo.metrosPorUnidade ?? null}
+                        tipoViaCaminho={tipoViaCaminho}
+                        tempoExecucaoMs={tempoExecucaoMs}
+                        totalVertices={grafo.vertices.length}
+                        totalArestas={grafo.arestas.length}
+                        verticesCaminho={verticesCaminho}
+                        caminhoInexistente={caminhoInexistente}
+                        ehGrafoGrande={ehGrafoGrande}
+                        mostrarVertices={mostrarVertices}
+                        mostrarPesos={mostrarPesos}
+                        onAlternarVertices={() =>
+                            setMostrarVertices((valor) => !valor)
+                        }
+                        onAlternarPesos={() =>
+                            setMostrarPesos((valor) => !valor)
+                        }
+                        onDesfazerSelecao={handleDesfazerSelecao}
+                        onImportarArquivo={handleImportarArquivo}
+                        carregandoUpload={carregandoUpload}
+                        erroUpload={erroUpload}
+                        onCriarGrafo={handleCriarGrafo}
+                        onEditarGrafo={handleEditarGrafo}
+                        onCopiarImagem={handleCopiarImagem}
+                        mensagemCopia={mensagemCopia}
                     />
-                </main>
-            </div>
-        );
-    }
-
-    // === Renderização normal (navegação / Dijkstra) ===
-    return (
-        <div className="app-layout">
-            <div className={`painel-wrapper${painelVisivel ? "" : " oculto"}`}>
-                <PainelLateral
-                    grafosDisponiveis={grafosDisponiveis}
-                    grafoSelecionado={grafoSelecionado}
-                    onSelecionarGrafo={handleSelecionarGrafo}
-                    origemSelecionada={origemSelecionada}
-                    destinoSelecionado={destinoSelecionado}
-                    distanciaTotal={distanciaTotal}
-                    metrosPorUnidade={grafo.metrosPorUnidade ?? null}
-                    tipoViaCaminho={tipoViaCaminho}
-                    tempoExecucaoMs={tempoExecucaoMs}
-                    totalVertices={grafo.vertices.length}
-                    totalArestas={grafo.arestas.length}
-                    verticesCaminho={verticesCaminho}
-                    caminhoInexistente={caminhoInexistente}
-                    ehGrafoGrande={ehGrafoGrande}
-                    mostrarVertices={mostrarVertices}
-                    mostrarPesos={mostrarPesos}
-                    onAlternarVertices={() =>
-                        setMostrarVertices((valor) => !valor)
-                    }
-                    onAlternarPesos={() =>
-                        setMostrarPesos((valor) => !valor)
-                    }
-                    onDesfazerSelecao={handleDesfazerSelecao}
-                    onImportarArquivo={handleImportarArquivo}
-                    carregandoUpload={carregandoUpload}
-                    erroUpload={erroUpload}
-                    onCriarGrafo={handleCriarGrafo}
-                    onEditarGrafo={handleEditarGrafo}
-                    onCopiarImagem={handleCopiarImagem}
-                    mensagemCopia={mensagemCopia}
-                />
+                )}
             </div>
 
             <main className="app-area-canvas">
                 <button
                     type="button"
                     className="botao-toggle-painel"
-                    onClick={() => setPainelVisivel((visivel) => !visivel)}
+                    onClick={() => setPainelVisivel((v) => !v)}
                     title={painelVisivel ? "Ocultar painel" : "Mostrar painel"}
                 >
                     {painelVisivel ? "‹" : "☰"}
                 </button>
 
-                <GrafoCanvas
-                    grafo={grafo}
-                    origemSelecionada={origemSelecionada}
-                    destinoSelecionado={destinoSelecionado}
-                    menorCaminho={menorCaminho}
-                    mostrarVertices={mostrarVertices}
-                    mostrarPesos={mostrarPesos}
-                    onClickVertice={handleClickVertice}
-                    onClickFora={handleClickFora}
-                />
+                <div
+                    className="troca-fade"
+                    key={emEdicao ? "canvas-edicao" : "canvas-nav"}
+                >
+                    {emEdicao && grafoEditando ? (
+                        <CanvasEdicao
+                            grafo={grafoEditando}
+                            modo={ferramentaEdicao}
+                            onGrafoMudou={setGrafoEditando}
+                            onMensagem={setMensagemEdicao}
+                        />
+                    ) : (
+                        <GrafoCanvas
+                            grafo={grafo}
+                            origemSelecionada={origemSelecionada}
+                            destinoSelecionado={destinoSelecionado}
+                            menorCaminho={menorCaminho}
+                            mostrarVertices={mostrarVertices}
+                            mostrarPesos={mostrarPesos}
+                            onClickVertice={handleClickVertice}
+                            onClickFora={handleClickFora}
+                        />
+                    )}
+                </div>
             </main>
         </div>
     );

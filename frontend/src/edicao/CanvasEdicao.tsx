@@ -8,6 +8,7 @@ import {
 } from "../../../shared/utils/editorGrafo";
 import { desenharGrafo } from "../canvas/desenharGrafo";
 import { LIMITE_GRAFO_GRANDE } from "../canvas/GrafoCanvas";
+import { Modal } from "../components/Modal";
 import "../canvas/GrafoCanvas.css";
 import "./CanvasEdicao.css";
 
@@ -87,6 +88,29 @@ export const CanvasEdicao = ({
     // Aplicado apenas no primeiro layout / ao mudar de grafo via "Editar".
     const precisaAjustar = useRef(true);
 
+    const offsetPendenteRef = useRef<{ x: number; y: number } | null>(null);
+    const rafIdRef = useRef<number | null>(null);
+
+    const agendarOffset = (novo: { x: number; y: number }) => {
+        offsetPendenteRef.current = novo;
+        if (rafIdRef.current !== null) return;
+        rafIdRef.current = requestAnimationFrame(() => {
+            rafIdRef.current = null;
+            if (offsetPendenteRef.current) {
+                setOffset(offsetPendenteRef.current);
+                offsetPendenteRef.current = null;
+            }
+        });
+    };
+
+    useEffect(() => {
+        return () => {
+            if (rafIdRef.current !== null) {
+                cancelAnimationFrame(rafIdRef.current);
+            }
+        };
+    }, []);
+
     // Estado interno do gesto em curso.
     const arrasto = useRef({
         ativo: false,
@@ -105,6 +129,11 @@ export const CanvasEdicao = ({
 
     // Primeiro vértice clicado no modo "criar-aresta" — espera o segundo.
     const [arestaOrigem, setArestaOrigem] = useState<string | null>(null);
+
+    // Aresta aguardando peso (modal aberto, esperando o usuário informar).
+    const [arestaPendente, setArestaPendente] = useState<
+        { origem: string; destino: string } | null
+    >(null);
 
     // Observa tamanho do container.
     useEffect(() => {
@@ -285,7 +314,7 @@ export const CanvasEdicao = ({
                 moverVertice(grafo, arrasto.current.idVertice, novaX, novaY)
             );
         } else {
-            setOffset({
+            agendarOffset({
                 x: arrasto.current.offsetInicialX + dx,
                 y: arrasto.current.offsetInicialY + dy
             });
@@ -331,39 +360,150 @@ export const CanvasEdicao = ({
                 return;
             }
 
-            // Pede o peso da aresta.
-            const ponderado = grafo.ehPonderado;
-            let distancia = 1;
-
-            if (ponderado) {
-                const entrada = window.prompt(
-                    `Peso da aresta de ${arestaOrigem} para ${verticeSob.id}:`,
-                    "1"
+            // Em grafos não-ponderados, cria com peso 1 direto.
+            if (!grafo.ehPonderado) {
+                onGrafoMudou(
+                    adicionarAresta(
+                        grafo,
+                        arestaOrigem,
+                        verticeSob.id,
+                        1,
+                        grafo.ehDirecionado
+                    )
                 );
-                if (entrada === null) {
-                    setArestaOrigem(null);
-                    return;
-                }
-                const numero = Number(entrada.replace(",", "."));
-                if (!Number.isFinite(numero) || numero <= 0) {
-                    window.alert(
-                        "Peso inválido. Use um número positivo (ex.: 5)."
-                    );
-                    return;
-                }
-                distancia = numero;
+                setArestaOrigem(null);
+                return;
             }
 
+            // Em ponderados, abre modal para pedir o peso. A criação real
+            // acontece no callback de confirmar do modal.
+            setArestaPendente({ origem: arestaOrigem, destino: verticeSob.id });
+            return;
+        }
+    };
+
+    const onTouchStart = (event: React.TouchEvent<HTMLCanvasElement>) => {
+        if (event.touches.length !== 1) return;
+        const touch = event.touches[0];
+        const rect = event.currentTarget.getBoundingClientRect();
+        const x = touch.clientX - rect.left;
+        const y = touch.clientY - rect.top;
+        const mundo = telaParaMundo(x, y);
+        const verticeSob = verticeProximo(mundo.x, mundo.y);
+
+        if (modo === "selecionar" && verticeSob !== null) {
+            arrasto.current = {
+                ativo: true,
+                moveu: false,
+                idVertice: verticeSob.id,
+                inicioX: x,
+                inicioY: y,
+                offsetInicialX: offset.x,
+                offsetInicialY: offset.y,
+                verticeInicialX: verticeSob.x,
+                verticeInicialY: verticeSob.y
+            };
+            setArrastando(true);
+            return;
+        }
+
+        arrasto.current = {
+            ativo: true,
+            moveu: false,
+            idVertice: null,
+            inicioX: x,
+            inicioY: y,
+            offsetInicialX: offset.x,
+            offsetInicialY: offset.y,
+            verticeInicialX: 0,
+            verticeInicialY: 0
+        };
+        setArrastando(true);
+    };
+
+    const onTouchMove = (event: React.TouchEvent<HTMLCanvasElement>) => {
+        if (!arrasto.current.ativo) return;
+        if (event.touches.length !== 1) return;
+        const touch = event.touches[0];
+        const rect = event.currentTarget.getBoundingClientRect();
+        const x = touch.clientX - rect.left;
+        const y = touch.clientY - rect.top;
+        const dx = x - arrasto.current.inicioX;
+        const dy = y - arrasto.current.inicioY;
+
+        if (Math.abs(dx) <= 4 && Math.abs(dy) <= 4) return;
+
+        arrasto.current.moveu = true;
+
+        if (arrasto.current.idVertice !== null) {
+            const novaX = arrasto.current.verticeInicialX + dx / escala;
+            const novaY = arrasto.current.verticeInicialY + dy / escala;
             onGrafoMudou(
-                adicionarAresta(
-                    grafo,
-                    arestaOrigem,
-                    verticeSob.id,
-                    distancia,
-                    grafo.ehDirecionado
-                )
+                moverVertice(grafo, arrasto.current.idVertice, novaX, novaY)
             );
-            setArestaOrigem(null);
+        } else {
+            agendarOffset({
+                x: arrasto.current.offsetInicialX + dx,
+                y: arrasto.current.offsetInicialY + dy
+            });
+        }
+    };
+
+    const onTouchEnd = (event: React.TouchEvent<HTMLCanvasElement>) => {
+        if (!arrasto.current.ativo) return;
+
+        const moveu = arrasto.current.moveu;
+        arrasto.current.ativo = false;
+        setArrastando(false);
+
+        if (moveu) return;
+
+        const touch = event.changedTouches[0];
+        if (!touch) return;
+        const rect = event.currentTarget.getBoundingClientRect();
+        const x = touch.clientX - rect.left;
+        const y = touch.clientY - rect.top;
+        const mundo = telaParaMundo(x, y);
+        const verticeSob = verticeProximo(mundo.x, mundo.y);
+
+        if (modo === "adicionar") {
+            onGrafoMudou(adicionarVertice(grafo, mundo.x, mundo.y));
+            return;
+        }
+
+        if (modo === "excluir") {
+            if (verticeSob !== null) {
+                onGrafoMudou(removerVertice(grafo, verticeSob.id));
+            }
+            return;
+        }
+
+        if (modo === "criar-aresta") {
+            if (verticeSob === null) return;
+            if (arestaOrigem === null) {
+                setArestaOrigem(verticeSob.id);
+                return;
+            }
+            if (arestaOrigem === verticeSob.id) {
+                setArestaOrigem(null);
+                return;
+            }
+
+            if (!grafo.ehPonderado) {
+                onGrafoMudou(
+                    adicionarAresta(
+                        grafo,
+                        arestaOrigem,
+                        verticeSob.id,
+                        1,
+                        grafo.ehDirecionado
+                    )
+                );
+                setArestaOrigem(null);
+                return;
+            }
+
+            setArestaPendente({ origem: arestaOrigem, destino: verticeSob.id });
             return;
         }
     };
@@ -490,11 +630,14 @@ export const CanvasEdicao = ({
                 onMouseMove={onMouseMove}
                 onMouseUp={onMouseUp}
                 onWheel={onWheel}
+                onTouchStart={onTouchStart}
+                onTouchMove={onTouchMove}
+                onTouchEnd={onTouchEnd}
                 style={{ cursor }}
             />
 
-            <div className="edicao-rodape">
-                <span className="edicao-rodape-rotulo">Modo:</span>
+            <div className="edicao-rodape" data-modo={modo}>
+                <span className="edicao-rodape-rotulo">Modo</span>
                 <strong>
                     {modo === "adicionar"
                         ? "Adicionar nó"
@@ -505,6 +648,45 @@ export const CanvasEdicao = ({
                                 : "Selecionar / arrastar"}
                 </strong>
             </div>
+
+            <Modal
+                aberto={arestaPendente !== null}
+                titulo="Peso da aresta"
+                mensagem={
+                    arestaPendente
+                        ? `De ${arestaPendente.origem} para ${arestaPendente.destino}`
+                        : undefined
+                }
+                comInput
+                valorInicial="1"
+                placeholder="Ex.: 5"
+                validar={(valor) => {
+                    const numero = Number(valor.replace(",", "."));
+                    if (!Number.isFinite(numero) || numero <= 0) {
+                        return "Peso inválido. Use um número positivo (ex.: 5).";
+                    }
+                    return null;
+                }}
+                onConfirmar={(valor) => {
+                    if (!arestaPendente) return;
+                    const distancia = Number(valor.replace(",", "."));
+                    onGrafoMudou(
+                        adicionarAresta(
+                            grafo,
+                            arestaPendente.origem,
+                            arestaPendente.destino,
+                            distancia,
+                            grafo.ehDirecionado
+                        )
+                    );
+                    setArestaPendente(null);
+                    setArestaOrigem(null);
+                }}
+                onCancelar={() => {
+                    setArestaPendente(null);
+                    setArestaOrigem(null);
+                }}
+            />
         </div>
     );
 };

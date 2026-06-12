@@ -56,6 +56,13 @@ export function desenharGrafo(
     ctx.fillStyle = "#0f172a";
     ctx.fillRect(0, 0, larguraCanvas, alturaCanvas);
 
+    // Viewport em coordenadas do mundo (com pequena margem).
+    const margemMundo = 50 / escala;
+    const xMinV = -offset.x / escala - margemMundo;
+    const xMaxV = (larguraCanvas - offset.x) / escala + margemMundo;
+    const yMinV = -offset.y / escala - margemMundo;
+    const yMaxV = (alturaCanvas - offset.y) / escala + margemMundo;
+
     ctx.save();
 
     // Aplica deslocamento e zoom
@@ -111,6 +118,13 @@ export function desenharGrafo(
         const destino = mapaVertices.get(aresta.destino);
         if (!origem || !destino) return;
 
+        // Pula arestas inteiramente fora do viewport (viewport culling).
+        const loX = origem.x < destino.x ? origem.x : destino.x;
+        const hiX = origem.x > destino.x ? origem.x : destino.x;
+        const loY = origem.y < destino.y ? origem.y : destino.y;
+        const hiY = origem.y > destino.y ? origem.y : destino.y;
+        if (hiX < xMinV || loX > xMaxV || hiY < yMinV || loY > yMaxV) return;
+
         // No trajeto, a cor revela o tipo de via: mão única em amarelo,
         // mão dupla em laranja. Fora do trajeto usa a cor base do grafo.
         const cor = ehCaminho
@@ -156,6 +170,11 @@ export function desenharGrafo(
         // Raio dividido pela escala para manter tamanho constante na tela.
         const raioTela = raioVertice / escala;
         grafo.vertices.forEach((vertice) => {
+            if (
+                vertice.x < xMinV || vertice.x > xMaxV ||
+                vertice.y < yMinV || vertice.y > yMaxV
+            ) return;
+
             ctx.beginPath();
             ctx.arc(vertice.x, vertice.y, raioTela, 0, Math.PI * 2);
 
@@ -168,11 +187,18 @@ export function desenharGrafo(
             }
             ctx.fill();
 
+            const rotulo = vertice.rotulo ?? vertice.id;
+            const tamanhoFonte =
+                rotulo.length <= 2 ? 14
+                    : rotulo.length <= 4 ? 12
+                        : rotulo.length <= 6 ? 10
+                            : 8;
+
             ctx.fillStyle = "white";
-            ctx.font = `${14 / escala}px Arial`;
+            ctx.font = `${tamanhoFonte / escala}px Arial`;
             ctx.textAlign = "center";
             ctx.textBaseline = "middle";
-            ctx.fillText(vertice.rotulo ?? vertice.id, vertice.x, vertice.y);
+            ctx.fillText(rotulo, vertice.x, vertice.y);
         });
     } else {
         // Grafo grande (mapa): por padrão só os marcadores de origem/destino.
@@ -181,6 +207,11 @@ export function desenharGrafo(
             const raioTela = raioVertice / escala;
             ctx.fillStyle = "#3b82f6";
             grafo.vertices.forEach((vertice) => {
+                if (
+                    vertice.x < xMinV || vertice.x > xMaxV ||
+                    vertice.y < yMinV || vertice.y > yMaxV
+                ) return;
+
                 ctx.beginPath();
                 ctx.arc(vertice.x, vertice.y, raioTela, 0, Math.PI * 2);
                 ctx.fill();

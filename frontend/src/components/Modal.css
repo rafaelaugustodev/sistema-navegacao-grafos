@@ -1,0 +1,155 @@
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.65);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 16px;
+    box-sizing: border-box;
+    animation: modal-fade-in 0.15s ease;
+}
+
+@keyframes modal-fade-in {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.modal-card {
+    background: #1f2937;
+    border: 1px solid #4b5563;
+    border-radius: 12px;
+    padding: 24px;
+    width: 100%;
+    max-width: 420px;
+    box-sizing: border-box;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    color: white;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    animation: modal-pop-in 0.18s ease;
+}
+
+@keyframes modal-pop-in {
+    from {
+        transform: scale(0.95);
+        opacity: 0;
+    }
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.modal-titulo {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+.modal-mensagem {
+    margin: 0;
+    margin-top: -10px;
+    color: #9ca3af;
+    font-size: 13px;
+}
+
+.modal-input {
+    width: 100%;
+    box-sizing: border-box;
+    background: #111827;
+    color: white;
+    border: 1px solid #4b5563;
+    border-radius: 6px;
+    padding: 10px 12px;
+    font-size: 14px;
+    font-family: inherit;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.modal-input:focus {
+    outline: none;
+    border-color: #f97316;
+    box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.2);
+}
+
+.modal-input::selection {
+    background: rgba(249, 115, 22, 0.4);
+    color: white;
+}
+
+.modal-erro {
+    margin: 0;
+    padding: 9px 12px;
+    background: rgba(239, 68, 68, 0.15);
+    border: 1px solid #ef4444;
+    border-radius: 6px;
+    color: #fecaca;
+    font-size: 13px;
+}
+
+.modal-acoes {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 4px;
+    flex-wrap: wrap;
+}
+
+.modal-botao {
+    flex: 0 0 auto;
+    border: 1px solid #4b5563;
+    background: #374151;
+    color: white;
+    padding: 9px 18px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: background 0.12s ease, border-color 0.12s ease;
+}
+
+.modal-botao:hover {
+    background: #4b5563;
+}
+
+.modal-botao-confirmar {
+    background: #f97316;
+    border-color: #f97316;
+}
+
+.modal-botao-confirmar:hover {
+    background: #ea7406;
+    border-color: #ea7406;
+}
+
+@media (max-width: 480px) {
+    .modal-card {
+        padding: 18px;
+        gap: 14px;
+        border-radius: 10px;
+    }
+
+    .modal-titulo {
+        font-size: 16px;
+    }
+
+    .modal-mensagem {
+        margin-top: -4px;
+    }
+
+    .modal-acoes {
+        flex-direction: column-reverse;
+    }
+
+    .modal-botao {
+        width: 100%;
+    }
+}

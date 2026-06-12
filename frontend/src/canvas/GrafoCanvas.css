@@ -6,6 +6,7 @@
 
 .canvas-container canvas {
     display: block;
+    touch-action: none;
 }
 
 .barra-zoom {
@@ -67,3 +68,44 @@
     height: 20px;
     background: #cbd5e1;
 }
+
+@media (max-width: 768px) {
+    .barra-zoom {
+        gap: 8px;
+        padding: 6px 10px;
+    }
+
+    .zoom-botao {
+        width: 36px;
+        height: 36px;
+        font-size: 18px;
+    }
+
+    .zoom-porcentagem {
+        min-width: 42px;
+        font-size: 13px;
+    }
+}
+
+@media (max-width: 480px) {
+    .barra-zoom {
+        right: 10px;
+        bottom: 10px;
+        gap: 6px;
+        padding: 5px 8px;
+    }
+
+    .zoom-rotulo {
+        display: none;
+    }
+
+    .zoom-botao {
+        width: 38px;
+        height: 38px;
+    }
+
+    .zoom-divisor {
+        display: none;
+    }
+}
+
