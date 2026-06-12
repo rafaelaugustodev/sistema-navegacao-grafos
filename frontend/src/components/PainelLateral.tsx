@@ -1,5 +1,5 @@
 import { useRef } from "react";
-import type { Grafo, Vertice } from "../../../shared/types/grafo";
+import type { Grafo, Vertice } from "../types/grafo";
 import "./PainelLateral.css";
 
 type PainelLateralProps = {

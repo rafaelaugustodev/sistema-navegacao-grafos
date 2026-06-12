@@ -1,4 +1,4 @@
-import type { Grafo } from "../../../shared/types/grafo";
+import type { Grafo } from "../types/grafo";
 
 type Vertice = Grafo["vertices"][number];
 type Aresta = Grafo["arestas"][number];

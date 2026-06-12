@@ -4,11 +4,11 @@ import { PainelLateral } from "./components/PainelLateral";
 import { PainelEdicao } from "./edicao/PainelEdicao";
 import { CanvasEdicao, type ModoEdicao } from "./edicao/CanvasEdicao";
 import { grafosDisponiveis as grafosBase } from "./data/grafoExemplo";
-import { dijkstra } from "../../shared/algoritmos/dijkstra";
+import { dijkstra } from "./algoritmos/dijkstra";
 import { grafoVazio } from "../../shared/utils/editorGrafo";
 import { importarGrafo } from "./api/upload";
 import { copiarCanvasParaClipboard } from "./utils/copiarImagem";
-import type { Grafo } from "../../shared/types/grafo";
+import type { Grafo } from "./types/grafo";
 import "./App.css";
 
 type TipoModoEdicao = "criar" | "editar";

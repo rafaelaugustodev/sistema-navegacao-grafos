@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import type { Grafo } from "../../../shared/types/grafo";
+import type { Grafo } from "../types/grafo";
 import {
     adicionarVertice,
     moverVertice,

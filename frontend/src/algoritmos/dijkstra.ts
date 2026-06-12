@@ -19,8 +19,8 @@
  * Assim, o Dijkstra consegue sempre explorar primeiro o vértice mais promissor.
  */
 
-import type { Grafo } from "../types/grafo.js";
-import { MinHeap } from "./minHeap.js";
+import type { Grafo } from "../types/grafo";
+import { MinHeap } from "./minHeap";
 
 const INF = Infinity;
 

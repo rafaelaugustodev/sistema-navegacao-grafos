@@ -1,7 +1,7 @@
 import { Router } from "express";
 import multer from "multer";
 
-import type { Grafo } from "../../../shared/types/grafo.js";
+import type { Grafo } from "../types/grafo.js";
 
 import { parseOsm } from "../parsers/osmParser.js";
 import { parsePoly } from "../parsers/polyParser.js";

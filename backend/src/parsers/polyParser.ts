@@ -1,4 +1,4 @@
-import type { Aresta, Grafo, Vertice } from "../../../shared/types/grafo.js";
+import type { Aresta, Grafo, Vertice } from "../types/grafo.js";
 
 /**
  * Converte um arquivo .poly para um objeto Grafo.

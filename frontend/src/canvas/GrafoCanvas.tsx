@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import type { Grafo } from "../../../shared/types/grafo";
+import type { Grafo } from "../types/grafo";
 import { useZoomPan } from "./useZoomPan";
 import { desenharGrafo } from "./desenharGrafo";
 import "./GrafoCanvas.css";

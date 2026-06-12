@@ -5,7 +5,7 @@
     "module": "Node16",
     "moduleResolution": "node16",
 
-    "rootDir": "..",
+    "rootDir": "./src",
     "outDir": "./dist",
 
     "strict": true,
@@ -17,5 +17,5 @@
     "sourceMap": true
   },
 
-  "include": ["src", "../shared/**/*.ts"]
+  "include": ["src"]
 }

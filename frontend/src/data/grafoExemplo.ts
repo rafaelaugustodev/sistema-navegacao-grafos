@@ -1,4 +1,4 @@
-import type { Grafo } from "../../../shared/types/grafo";
+import type { Grafo } from "../types/grafo";
 
 // Grafo conexo padrão — todos os vértices são alcançáveis entre si.
 export const grafoExemplo: Grafo = {

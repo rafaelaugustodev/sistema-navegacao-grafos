@@ -1,4 +1,4 @@
-import type { Aresta, Grafo, Vertice } from "../../../shared/types/grafo.js";
+import type { Aresta, Grafo, Vertice } from "../types/grafo.js";
 
 // Constantes usadas na conversão de latitude/longitude para coordenadas UTM
 const A_WGS84 = 6378137.0; // raio aproximado da Terra em metros

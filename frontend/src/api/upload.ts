@@ -1,6 +1,7 @@
-import type { Grafo } from "../../../shared/types/grafo";
+import type { Grafo } from "../types/grafo";
 
-const URL_BACKEND = "http://localhost:3000/api/upload";
+const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3000/api";
+const URL_BACKEND = `${API_URL}/upload`;
 
 /**
  * Envia um arquivo de mapa para o backend.

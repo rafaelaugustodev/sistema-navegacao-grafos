@@ -1,4 +1,4 @@
-import type { Grafo } from "../../../shared/types/grafo";
+import type { Grafo } from "../types/grafo";
 import type { ModoEdicao } from "./CanvasEdicao";
 import "../components/PainelLateral.css";
 import "./PainelEdicao.css";
