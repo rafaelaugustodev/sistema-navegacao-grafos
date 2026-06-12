@@ -1,107 +1,108 @@
 # Sistema de Navegação em Grafos
 
-Projeto desenvolvido para a disciplina de Algoritmos e Estruturas de Dados II (AED2), com foco na implementação do algoritmo de Dijkstra para cálculo de menor caminho em grafos ponderados.
+Projeto desenvolvido para a disciplina de Algoritmos e Estruturas de Dados II (AED2), com foco na aplicação do algoritmo de Dijkstra para encontrar o menor caminho em grafos ponderados.
 
-O sistema permite importar mapas reais (`.osm`, `.xml`, `.poly` e `.txt`), converter os dados em grafos e exibir visualmente a rota de menor custo entre dois vértices selecionados pelo usuário.
+O sistema permite importar mapas, converter os dados em grafos, editar vértices e arestas e visualizar a menor rota entre dois pontos selecionados pelo usuário.
 
-## Tecnologias Utilizadas
+## Acesso
+
+https://sistema-navegacao-grafos-frontend.onrender.com
+
+## Tecnologias
 
 ### Frontend
-- React
-- TypeScript
-- Vite
-- Canvas API
+
+* React
+* TypeScript
+* Vite
+* Canvas API
 
 ### Backend
-- Node.js
-- Express
-- TypeScript
-- Multer
-- CORS
-- dotenv
 
-### Estruturas e Algoritmos
-- Dijkstra
-- Lista de Adjacência
-- MinHeap
-- Vetor de Distâncias
-- Vetor de Predecessores
-- Conjunto de Visitados
+* Node.js
+* Express
+* TypeScript
+* Multer
+* CORS
+
+### Algoritmos e Estruturas
+
+* Dijkstra
+* Lista de adjacência
+* MinHeap
+* Vetor de distâncias
+* Vetor de predecessores
+* Conjunto de visitados
 
 ## Funcionalidades
 
-- Importação de mapas reais
-- Conversão de mapas para grafos
-- Criação e edição de vértices e arestas
-- Suporte a grafos direcionados e não direcionados
-- Seleção visual de origem e destino
-- Cálculo do menor caminho
-- Exibição gráfica da rota encontrada
-- Estatísticas de execução do algoritmo
-- Exportação da imagem do grafo
-- Interface responsiva (desktop, tablet e mobile) com suporte a gestos de toque
+* Importação de mapas nos formatos `.osm`, `.xml`, `.poly` e `.txt`
+* Conversão dos arquivos importados em grafos
+* Criação e edição de vértices e arestas
+* Suporte a grafos direcionados e não direcionados
+* Seleção visual de origem e destino
+* Cálculo do menor caminho com Dijkstra
+* Exibição gráfica da rota encontrada
+* Estatísticas de execução do algoritmo
+* Exportação da imagem do grafo
+* Interface responsiva para desktop, tablet e mobile
 
-## Organização do Projeto
+## Estrutura do Projeto
 
 ```txt
-frontend/  → React + Vite + Canvas (interface, viewport, edição visual)
+frontend/
   src/
-    api/         → comunicação com o backend
-    algoritmos/  → Dijkstra e MinHeap
-    canvas/      → renderização do grafo, zoom/pan
-    components/  → Modal, PainelLateral
-    edicao/      → editor de grafo (criação e edição via mouse/touch)
-    types/       → tipos do Grafo
+    api/          comunicação com o backend
+    algoritmos/   Dijkstra e MinHeap
+    canvas/       renderização, zoom e pan
+    components/   componentes da interface
+    edicao/       edição visual do grafo
+    types/        tipos do grafo
 
-backend/   → Node.js + Express (upload e parsing dos arquivos de mapa)
+backend/
   src/
-    parsers/     → .poly, .osm/.xml, .txt
-    routes/      → /api/upload
-    types/       → tipos do Grafo
+    parsers/      leitura de arquivos .osm, .xml, .poly e .txt
+    routes/       rotas da API
+    types/        tipos do grafo
 ```
 
-## Documentação e Artefatos
+## Documentação
 
-A documentação do projeto, arquivos auxiliares e demais artefatos utilizados no desenvolvimento estão disponíveis em:
+A documentação, os arquivos auxiliares e os demais artefatos do projeto estão disponíveis em:
 
 [Google Drive - Documentação do Projeto](https://drive.google.com/drive/folders/1GO0rBSrr5jF-awCXLVV6ccvmhYqSQZy-?usp=sharing)
 
 ## Pré-requisitos
 
-- Node.js 18 ou superior
-- npm (vem com o Node)
+* Node.js 18 ou superior
+* npm
 
-## Configuração de Variáveis de Ambiente
+## Variáveis de Ambiente
 
-Cada projeto possui um `.env.example` na sua raiz. Copie para `.env` e ajuste conforme seu ambiente.
+Cada projeto possui um arquivo `.env.example`. Copie esse arquivo para `.env` antes de executar o projeto localmente.
 
-### Backend (`backend/.env`)
+### Backend
+
+Arquivo: `backend/.env`
 
 ```env
 PORT=3000
 CORS_ORIGIN=http://localhost:5173
 ```
 
-| Variável | Descrição |
-|----------|-----------|
-| `PORT` | Porta onde o servidor Express vai rodar |
-| `CORS_ORIGIN` | URL do frontend autorizada a fazer requisições. Em produção, use a URL pública. Use `*` para permitir qualquer origem (não recomendado em produção) |
+### Frontend
 
-### Frontend (`frontend/.env`)
+Arquivo: `frontend/.env`
 
 ```env
 VITE_API_URL=http://localhost:3000/api
 ```
 
-| Variável | Descrição |
-|----------|-----------|
-| `VITE_API_URL` | URL base da API do backend. O upload faz `POST` em `${VITE_API_URL}/upload` |
+No Vite, variáveis usadas no frontend precisam começar com `VITE_`.
 
-> **Importante:** todas as variáveis do frontend precisam começar com `VITE_` para serem expostas pelo Vite ao código do cliente.
+## Como executar localmente
 
-## Como executar o projeto (desenvolvimento)
-
-### 1. Backend
+### Backend
 
 ```bash
 cd backend
@@ -116,13 +117,7 @@ O backend será executado em:
 http://localhost:3000
 ```
 
-Para testar a API:
-
-```txt
-http://localhost:3000/api
-```
-
-### 2. Frontend
+### Frontend
 
 Em outro terminal:
 
@@ -139,55 +134,6 @@ O frontend será executado em:
 http://localhost:5173
 ```
 
-## Deploy em Produção
+## Observação
 
-Cada pasta é completamente autônoma e pode ser publicada em uma plataforma diferente.
-
-> **Ordem recomendada:** primeiro deploy o backend, copie a URL pública gerada e use-a como `VITE_API_URL` no deploy do frontend. Caso contrário, o frontend em produção vai tentar acessar `localhost`.
-
-### Backend (Render, Railway, Fly.io, etc.)
-
-1. Conecte o repositório no serviço escolhido.
-2. Aponte o **root directory** para `backend/`.
-3. Configure os comandos:
-   - **Build:** `npm install && npm run build`
-   - **Start:** `npm start`
-4. Defina as variáveis de ambiente no painel da plataforma:
-
-   | Variável | Valor |
-   |----------|-------|
-   | `PORT` | normalmente injetada automaticamente pela plataforma |
-   | `CORS_ORIGIN` | URL pública do frontend (ex.: `https://navega-grafos.vercel.app`) |
-
-5. Faça o deploy e copie a URL pública gerada (ex.: `https://navega-grafos-api.onrender.com`).
-
-### Frontend (Vercel, Netlify, Cloudflare Pages, etc.)
-
-1. Conecte o repositório no serviço escolhido.
-2. Aponte o **root directory** para `frontend/`.
-3. Configure os comandos:
-   - **Build:** `npm install && npm run build`
-   - **Output:** `dist/`
-4. Defina a variável de ambiente:
-
-   | Variável | Valor |
-   |----------|-------|
-   | `VITE_API_URL` | URL pública do backend + `/api` (ex.: `https://navega-grafos-api.onrender.com/api`) |
-
-5. Faça o deploy.
-
-### Verificação pós-deploy
-
-1. Acesse a URL pública do frontend.
-2. Clique em **Importar arquivo** e envie um `.poly` ou `.osm` de teste.
-3. Se o mapa carregar, a comunicação entre frontend e backend está funcionando.
-4. Caso receba um erro de CORS, verifique se o `CORS_ORIGIN` do backend está exatamente igual ao domínio do frontend (sem barra no final).
-
-## Estrutura dos arquivos `.env`
-
-| Arquivo | Versionado no Git? | Função |
-|---------|--------------------|--------|
-| `.env.example` | ✅ Sim | Template com nomes das variáveis, sem valores sensíveis |
-| `.env` | ❌ Não (está no `.gitignore`) | Valores reais usados em dev local |
-
-Ao clonar o repositório, sempre execute `cp .env.example .env` em cada projeto antes do `npm install`.
+Os arquivos `.env` não devem ser versionados no Git. Apenas os arquivos `.env.example` devem ser mantidos no repositório como modelo de configuração.

@@ -23,6 +23,6 @@ app.use("/api", uploadRouter);
 
 app.listen(PORT, () => {
   console.log(
-    `Servidor rodando em http://localhost:${PORT}`
+    `Servidor rodando na porta ${PORT}`
   );
 });
