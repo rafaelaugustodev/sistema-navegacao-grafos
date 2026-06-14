@@ -112,5 +112,10 @@ export function parsePoly(texto: string): Grafo {
     arestas,
     ehPonderado: true,
     ehDirecionado: false,
+    // .poly do minitutorial já vem com a mesma redução de escala do
+    // osmParser (REDUTOR=2 sobre as coordenadas UTM): cada unidade do
+    // arquivo equivale a 2 metros reais. Mantém metrosPorUnidade=2 para
+    // o painel exibir o mesmo número que o equivalente .osm.
+    metrosPorUnidade: 2,
   };
 }
