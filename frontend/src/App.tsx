@@ -109,6 +109,9 @@ function App() {
     // Tempo gasto para executar o Dijkstra
     const tempoExecucaoMs = resultadoDijkstra?.tempoExecucaoMs ?? null;
 
+    // Nós visitados pelo algoritmo durante toda a busca (não só os do caminho)
+    const nosExplorados = resultadoDijkstra?.nosExplorados ?? null;
+
     // Não existe caminho quando origem e destino foram escolhidos mas o
     // Dijkstra não retornou rota.
     const caminhoInexistente =
@@ -360,6 +363,7 @@ function App() {
                         metrosPorUnidade={grafo.metrosPorUnidade ?? null}
                         tipoViaCaminho={tipoViaCaminho}
                         tempoExecucaoMs={tempoExecucaoMs}
+                        nosExplorados={nosExplorados}
                         totalVertices={grafo.vertices.length}
                         totalArestas={grafo.arestas.length}
                         verticesCaminho={verticesCaminho}

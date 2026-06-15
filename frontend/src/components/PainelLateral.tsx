@@ -12,6 +12,7 @@ type PainelLateralProps = {
     metrosPorUnidade: number | null;
     tipoViaCaminho: "unica" | "dupla" | "mista" | null;
     tempoExecucaoMs: number | null;
+    nosExplorados: number | null;
     totalVertices: number;
     totalArestas: number;
     verticesCaminho: Vertice[];
@@ -41,6 +42,7 @@ export const PainelLateral = ({
     metrosPorUnidade,
     tipoViaCaminho,
     tempoExecucaoMs,
+    nosExplorados,
     totalVertices,
     totalArestas,
     verticesCaminho,
@@ -88,10 +90,10 @@ export const PainelLateral = ({
     };
 
     // Quantidade de vértices no caminho retornado pelo Dijkstra
-    const quantidadeNosExplorados = verticesCaminho.length;
+    const quantidadeNosNoCaminho = verticesCaminho.length;
 
     // Quantidade de arestas no caminho
-    const quantidadeArestasExploradas =
+    const quantidadeArestasNoCaminho =
         verticesCaminho.length > 0
             ? verticesCaminho.length - 1
             : 0;
@@ -335,11 +337,11 @@ export const PainelLateral = ({
 
                 <p className="painel-linha">
                     <span className="painel-rotulo">
-                        Quantidade de nós explorados:
+                        Nós visitados pelo Dijkstra:
                     </span>{" "}
-                    {possuiCaminho ? (
+                    {nosExplorados !== null ? (
                         <span className="cor-destaque">
-                            {quantidadeNosExplorados}
+                            {nosExplorados}
                         </span>
                     ) : (
                         <span className="painel-placeholder">—</span>
@@ -348,11 +350,24 @@ export const PainelLateral = ({
 
                 <p className="painel-linha">
                     <span className="painel-rotulo">
-                        Quantidade de arestas exploradas:
+                        Nós no caminho:
                     </span>{" "}
                     {possuiCaminho ? (
                         <span className="cor-destaque">
-                            {quantidadeArestasExploradas}
+                            {quantidadeNosNoCaminho}
+                        </span>
+                    ) : (
+                        <span className="painel-placeholder">—</span>
+                    )}
+                </p>
+
+                <p className="painel-linha">
+                    <span className="painel-rotulo">
+                        Arestas no caminho:
+                    </span>{" "}
+                    {possuiCaminho ? (
+                        <span className="cor-destaque">
+                            {quantidadeArestasNoCaminho}
                         </span>
                     ) : (
                         <span className="painel-placeholder">—</span>
@@ -390,7 +405,7 @@ export const PainelLateral = ({
             <section className="painel-bloco">
 
                 <h2 className="painel-subtitulo">
-                    Nós explorados
+                    Vértices do caminho
                 </h2>
 
                 {/* Lista os vértices que compõem o menor caminho */}
