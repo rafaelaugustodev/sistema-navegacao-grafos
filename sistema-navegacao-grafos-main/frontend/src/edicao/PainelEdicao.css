@@ -1,0 +1,31 @@
+.painel-botao.ativo {
+    background: #f97316;
+    border-color: #ea580c;
+    color: white;
+}
+
+.painel-botao.primario {
+    background: #22c55e;
+    border-color: #16a34a;
+    color: white;
+    font-weight: 600;
+}
+
+.painel-botao.primario:disabled {
+    background: #374151;
+    border-color: #4b5563;
+}
+
+.painel-dica {
+    font-size: 13px;
+    margin: 0;
+    padding: 10px;
+    background: rgba(59, 130, 246, 0.12);
+    border: 1px solid #3b82f6;
+    border-radius: 6px;
+    color: #bfdbfe;
+}
+
+.painel-bloco-final {
+    margin-top: auto;
+}
