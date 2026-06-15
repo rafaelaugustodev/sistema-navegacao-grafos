@@ -405,7 +405,7 @@ export const PainelLateral = ({
             <section className="painel-bloco">
 
                 <h2 className="painel-subtitulo">
-                    Nós explorados
+                    Vértices do caminho
                 </h2>
 
                 {/* Lista os vértices que compõem o menor caminho */}
